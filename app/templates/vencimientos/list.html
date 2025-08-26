@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4>Próximos Vencimientos</h4>
+<form class="row g-2 mb-3">
+  <div class="col-md-3">
+    <label class="form-label">Mes (YYYY-MM)</label>
+    <input type="month" class="form-control" name="mes">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Cliente</label>
+    <select name="cliente_id" class="form-select">
+      <option value="">Todos</option>
+      {% for c in clientes %}
+      <option value="{{ c.id_cliente }}">{{ c.nombre_razon_social }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2 align-self-end">
+    <button class="btn btn-outline-primary w-100">Filtrar</button>
+  </div>
+</form>
+<table class="table table-striped">
+  <thead><tr><th>Cliente</th><th>Tipo</th><th>Emisión</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+  <tbody>
+    {% for v in vencimientos %}
+    <tr>
+      <td>{{ v.cliente.nombre_razon_social if v.cliente else '-' }}</td>
+      <td>{{ v.tipo_documento }}</td>
+      <td>{{ v.fecha_emision }}</td>
+      <td>{{ v.fecha_vencimiento }}</td>
+      <td>{{ v.estado }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5">Sin resultados</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

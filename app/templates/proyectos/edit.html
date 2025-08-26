@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4>Editar Proyecto #{{ p.id_proyecto }}</h4>
+<form method="post">
+  <div class="row g-3">
+    <div class="col-md-2">
+      <label class="form-label">Año</label>
+      <input type="number" name="anho" class="form-control" value="{{ p.anho }}">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Tipo de trámite</label>
+      <input name="tipo_tramite" class="form-control" value="{{ p.tipo_tramite }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Estado</label>
+      <select name="estado" class="form-select">
+        {% for e in ['pendiente','en proceso','entregado','finalizado'] %}
+        <option value="{{ e }}" {% if p.estado==e %}selected{% endif %}>{{ e }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Propiedad</label>
+      <select name="id_propiedad" class="form-select">
+        <option value="">Sin propiedad</option>
+        {% for pr in propiedades %}
+        <option value="{{ pr.id_propiedad }}" {% if p.id_propiedad==pr.id_propiedad %}selected{% endif %}>{{ pr.finca }} - {{ pr.departamento }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Firma de contrato</label>
+      <input type="date" name="fecha_firma_contrato" class="form-control" value="{{ p.fecha_firma_contrato }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Plazo límite</label>
+      <input type="date" name="plazo_limite" class="form-control" value="{{ p.plazo_limite }}">
+    </div>
+  </div>
+  <div class="mt-3">
+    <button class="btn btn-primary">Guardar</button>
+    <a href="{{ url_for('proyectos.board', id_cliente=p.id_cliente, inst=p.institucion) }}" class="btn btn-secondary">Volver</a>
+  </div>
+</form>
+{% endblock %}

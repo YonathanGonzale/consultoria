@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex align-items-center gap-3">
+    <img src="https://dummyimage.com/48x48/0d6efd/ffffff&text=M" class="rounded" alt="logo">
+    <div>
+      <div class="fw-semibold">{{ cliente.nombre_razon_social }}</div>
+      <div class="text-muted small">Selecciona la institución</div>
+    </div>
+  </div>
+  <a href="{{ url_for('clientes.nuevo_cliente') }}" class="btn btn-primary">Agregar Cliente</a>
+</div>
+
+<div class="row g-3">
+  {% for i in instituciones %}
+  <div class="col-md-4">
+    <a class="text-decoration-none" href="{{ url_for('clientes.institucion_detalle', id_cliente=cliente.id_cliente, inst=i.key) }}">
+      <div class="card h-100 border-2">
+        <div class="card-body text-center">
+          <img src="{{ i.logo }}" style="max-height:80px" alt="{{ i.key }}">
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

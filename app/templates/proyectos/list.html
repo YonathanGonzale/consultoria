@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4>Proyectos (últimos 50)</h4>
+<table class="table table-sm table-striped">
+  <thead><tr><th>ID</th><th>Cliente</th><th>Institución</th><th>Año</th><th>Tipo</th><th>Estado</th></tr></thead>
+  <tbody>
+  {% for p in proyectos %}
+    <tr>
+      <td>{{ p.id_proyecto }}</td>
+      <td>{{ p.cliente.nombre_razon_social if p.cliente else '-' }}</td>
+      <td>{{ p.institucion }}</td>
+      <td>{{ p.anho }}</td>
+      <td>{{ p.tipo_tramite }}</td>
+      <td>{{ p.estado }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="6">Sin proyectos</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
