@@ -30,6 +30,7 @@ def create_app():
     from .propiedades.routes import bp as propiedades_bp
     from .vencimientos.routes import bp as vencimientos_bp
     from .documentos.routes import bp as documentos_bp
+    from .mades.routes import bp as mades_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -38,6 +39,7 @@ def create_app():
     app.register_blueprint(proyectos_bp, url_prefix="/proyectos")
     app.register_blueprint(vencimientos_bp, url_prefix="/vencimientos")
     app.register_blueprint(documentos_bp, url_prefix="/documentos")
+    app.register_blueprint(mades_bp, url_prefix="/mades")
 
     # Crear carpeta de uploads
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)

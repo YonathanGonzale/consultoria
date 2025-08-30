@@ -43,9 +43,21 @@ def buscar():
 def instituciones(id_cliente):
     cliente = Cliente.query.get_or_404(id_cliente)
     instituciones = [
-        {"key": "MADES", "logo": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Logo_MADES.png"},
-        {"key": "SENAVE", "logo": "https://www.senave.gov.py/images/logo.png"},
-        {"key": "INFONA", "logo": "https://www.infona.gov.py/wp-content/uploads/2023/07/logo-infona.png"},
+        {
+        "key": "MADES",
+        "full_name": "Ministerio del Ambiente y Desarrollo Sostenible",
+        "logo": url_for('static', filename='img/logo_mades.png')
+    },
+    {
+        "key": "SENAVE",
+        "full_name": "Servicio Nacional de Calidad y Sanidad Vegetal y de Semillas",
+        "logo": url_for('static', filename='img/logo_senave.png')
+    },
+    {
+        "key": "INFONA",
+        "full_name": "Instituto Forestal Nacional",
+        "logo": url_for('static', filename='img/logo_infona.png')
+    },
     ]
     return render_template('clientes/instituciones.html', cliente=cliente, instituciones=instituciones)
 
@@ -54,9 +66,29 @@ def instituciones(id_cliente):
 def institucion_detalle(id_cliente, inst):
     cliente = Cliente.query.get_or_404(id_cliente)
     tipos = [
-        {"name": "EIA y EDE", "color": "success"},
-        {"name": "AUDITORIAS", "color": "danger"},
-        {"name": "PGAS", "color": "warning"},
-        {"name": "NO REQUIERE", "color": "primary"},
-    ]
+    {
+        "name": "EIA y EDE",
+        "desc": "Evaluación de Impacto Ambiental y Estudio de disposición de Efluentes",
+        "color": "success",
+        "icon": "bi-tree-fill"
+    },
+    {
+        "name": "AUDITORIAS",
+        "desc": "Auditorías ambientales",
+        "color": "danger",
+        "icon": "bi-clipboard-check-fill"
+    },
+    {
+        "name": "PGAG",
+        "desc": "Plan de Gestión Ambiental Genérico",
+        "color": "warning",
+        "icon": "bi-people-fill"
+    },
+    {
+        "name": "NO REQUIERE",
+        "desc": "Nota de consulta",
+        "color": "primary",
+        "icon": "bi-x-circle-fill"
+    }
+]
     return render_template('clientes/institucion_detalle.html', cliente=cliente, institucion=inst, tipos=tipos)

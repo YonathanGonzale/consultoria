@@ -11,16 +11,28 @@
   </div>
 </form>
 <table class="table table-hover">
-  <thead><tr><th>Nombre/Razón social</th><th>Contacto</th><th>Saldo pendiente</th></tr></thead>
+  <thead>
+    <tr>
+      <th>Nombre/Razón social</th>
+      <th>Contacto</th>
+      <th>Saldo pendiente</th>
+    </tr>
+  </thead>
   <tbody>
     {% for c in clientes %}
     <tr>
-      <td>{{ c.nombre_razon_social }}</td>
+      <td>
+        <a href="{{ url_for('clientes.instituciones', id_cliente=c.id_cliente) }}">
+          {{ c.nombre_razon_social }}
+        </a>
+      </td>
       <td>{{ c.contacto or '-' }}</td>
       <td>{{ c.saldo_total_pendiente or 0 }}</td>
     </tr>
     {% else %}
-    <tr><td colspan="3">Sin registros</td></tr>
+    <tr>
+      <td colspan="3">Sin registros</td>
+    </tr>
     {% endfor %}
   </tbody>
 </table>
