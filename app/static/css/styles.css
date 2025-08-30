@@ -1,1 +1,139 @@
-/* Estilos mínimos */
+/*Login Page Styles*/
+
+/* ----- General body ----- */
+.login-body {
+    background: #FFFEDF;
+    /* Amarillo claro institucional */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: "Segoe UI", Arial, sans-serif;
+    margin: 0;
+}
+
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+/* ----- Card ----- */
+.login-card {
+    max-width: 420px;
+    /* Tamaño máximo en desktop */
+    width: 100%;
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    text-align: center;
+}
+
+/* ----- Logo ----- */
+.logo-container img {
+    max-height: 160px;
+    /* Tamaño inicial para desktop */
+    width: auto;
+    margin-bottom: 1rem;
+}
+
+/* ----- Título ----- */
+.login-title {
+    color: #78933D;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+}
+
+/* ----- Inputs ----- */
+.form-label {
+    font-weight: 500;
+    color: #444;
+    text-align: left;
+    display: block;
+    margin-bottom: 0.3rem;
+}
+
+.form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #ccc;
+    padding: 0.75rem;
+    font-size: 1rem;
+}
+
+/* ----- Botón ----- */
+.btn-login {
+    background-color: #78933D;
+    border: none;
+    color: #fff;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-size: 1rem;
+    margin-top: 1rem;
+    width: 100%;
+    transition: background 0.2s ease;
+}
+
+.btn-login:hover {
+    background-color: #5f742f;
+    /* Verde más oscuro al hover */
+    color: #fff;
+}
+
+.logo-container img {
+    max-height: 200px;
+    /* logo standard */
+}
+
+.login-footer {
+    margin-top: 15px;
+    font-size: 0.85rem;
+    color: #78933D;
+    opacity: 0.8;
+    text-align: center;
+}
+
+/*Responsividad*/
+
+/* ----- Tablets y pantallas medianas ----- */
+@media (max-width: 768px) {
+    .login-card {
+        max-width: 90%;
+        /* más ancho en tablets */
+        padding: 1.5rem;
+    }
+
+    .logo-container img {
+        max-height: 140px;
+    }
+}
+
+/* ----- Móviles pequeños ----- */
+@media (max-width: 576px) {
+    .login-card {
+        margin: 1rem;
+        /* espacio con bordes */
+        padding: 1rem;
+    }
+
+    .logo-container img {
+        max-height: 110px;
+        /* logo más compacto */
+    }
+
+    .login-title {
+        font-size: 1.1rem;
+    }
+
+    .form-control {
+        font-size: 0.9rem;
+        padding: 0.6rem;
+    }
+
+    .btn-login {
+        padding: 0.6rem;
+        font-size: 0.95rem;
+    }
+}
