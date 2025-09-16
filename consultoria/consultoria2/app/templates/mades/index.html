@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Proyectos MADES</h2>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Año</th>
+        <th>Tipo de trámite</th>
+        <th>Estado</th>
+        <th>Plazo límite</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in proyectos %}
+      <tr>
+        <td>{{ p.cliente.nombre_razon_social }}</td>
+        <td>{{ p.anho }}</td>
+        <td>{{ p.tipo_tramite }}</td>
+        <td>{{ p.estado }}</td>
+        <td>{{ p.plazo_limite or "-" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

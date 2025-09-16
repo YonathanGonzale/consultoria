@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Buscar Propiedades{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-search"></i> Buscar Propiedades
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="GET">
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control form-control-lg" 
+                               placeholder="Buscar por finca, matrícula, padrón o cliente..." 
+                               value="{{ q }}" autofocus>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                    </div>
+                </form>
+                
+                {% if q %}
+                <div class="mt-4">
+                    <h5>Resultados para "{{ q }}" ({{ propiedades|length }})</h5>
+                    
+                    {% if propiedades %}
+                    <div class="list-group mt-3">
+                        {% for propiedad, cliente in propiedades %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <a href="{{ url_for('propiedades.detalle_propiedad', id_propiedad=propiedad.id_propiedad) }}" 
+                                           class="text-decoration-none">
+                                            {% if propiedad.finca %}
+                                                Finca: {{ propiedad.finca }}
+                                            {% else %}
+                                                Propiedad sin finca
+                                            {% endif %}
+                                        </a>
+                                    </h6>
+                                    <p class="mb-1">
+                                        <strong>Cliente:</strong> {{ cliente.nombre_razon_social }}
+                                    </p>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            {% if propiedad.matricula %}
+                                                <small><strong>Matrícula:</strong> {{ propiedad.matricula }}</small><br>
+                                            {% endif %}
+                                            {% if propiedad.padron %}
+                                                <small><strong>Padrón:</strong> {{ propiedad.padron }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-4">
+                                            {% if propiedad.superficie_ha %}
+                                                <small><strong>Superficie:</strong> {{ "{:,.1f}".format(propiedad.superficie_ha) }} ha</small><br>
+                                            {% endif %}
+                                            {% if propiedad.departamento %}
+                                                <small><strong>Ubicación:</strong> 
+                                                    {{ propiedad.departamento }}
+                                                    {% if propiedad.distrito %}, {{ propiedad.distrito }}{% endif %}
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-4">
+                                            {% if propiedad.coordenadas %}
+                                                <small><strong>Coordenadas:</strong> 
+                                                    <span class="font-monospace">{{ propiedad.coordenadas }}</span>
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <a href="{{ url_for('propiedades.detalle_propiedad', id_propiedad=propiedad.id_propiedad) }}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        Ver detalle
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle"></i>
+                        No se encontraron propiedades que coincidan con tu búsqueda.
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{{ url_for('propiedades.list_propiedades') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver a la lista
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

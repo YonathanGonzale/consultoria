@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if propiedad %}Editar Propiedad{% else %}Nueva Propiedad{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    {% if propiedad %}
+                        <i class="bi bi-pencil"></i> Editar Propiedad
+                    {% else %}
+                        <i class="bi bi-plus-circle"></i> Nueva Propiedad
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="id_cliente" class="form-label">Cliente *</label>
+                            <select name="id_cliente" class="form-select" required>
+                                <option value="">Seleccione un cliente</option>
+                                {% for cliente in clientes %}
+                                <option value="{{ cliente.id_cliente }}" 
+                                        {% if propiedad and propiedad.id_cliente == cliente.id_cliente %}selected{% endif %}>
+                                    {{ cliente.nombre_razon_social }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="finca" class="form-label">Finca</label>
+                            <input type="text" name="finca" class="form-control" 
+                                   value="{{ propiedad.finca if propiedad else '' }}"
+                                   placeholder="Ej: 1234">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="matricula" class="form-label">Matrícula</label>
+                            <input type="text" name="matricula" class="form-control" 
+                                   value="{{ propiedad.matricula if propiedad else '' }}"
+                                   placeholder="Ej: M-5678">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="padron" class="form-label">Padrón</label>
+                            <input type="text" name="padron" class="form-control" 
+                                   value="{{ propiedad.padron if propiedad else '' }}"
+                                   placeholder="Ej: P-9012">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="superficie_ha" class="form-label">Superficie (hectáreas)</label>
+                            <input type="number" name="superficie_ha" class="form-control" 
+                                   step="0.01" min="0"
+                                   value="{{ propiedad.superficie_ha if propiedad and propiedad.superficie_ha else '' }}"
+                                   placeholder="0.00">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="departamento" class="form-label">Departamento</label>
+                            <select name="departamento" class="form-select">
+                                <option value="">Seleccione departamento</option>
+                                <option value="Alto Paraguay" {% if propiedad and propiedad.departamento == 'Alto Paraguay' %}selected{% endif %}>Alto Paraguay</option>
+                                <option value="Alto Paraná" {% if propiedad and propiedad.departamento == 'Alto Paraná' %}selected{% endif %}>Alto Paraná</option>
+                                <option value="Amambay" {% if propiedad and propiedad.departamento == 'Amambay' %}selected{% endif %}>Amambay</option>
+                                <option value="Boquerón" {% if propiedad and propiedad.departamento == 'Boquerón' %}selected{% endif %}>Boquerón</option>
+                                <option value="Caaguazú" {% if propiedad and propiedad.departamento == 'Caaguazú' %}selected{% endif %}>Caaguazú</option>
+                                <option value="Caazapá" {% if propiedad and propiedad.departamento == 'Caazapá' %}selected{% endif %}>Caazapá</option>
+                                <option value="Canindeyú" {% if propiedad and propiedad.departamento == 'Canindeyú' %}selected{% endif %}>Canindeyú</option>
+                                <option value="Central" {% if propiedad and propiedad.departamento == 'Central' %}selected{% endif %}>Central</option>
+                                <option value="Concepción" {% if propiedad and propiedad.departamento == 'Concepción' %}selected{% endif %}>Concepción</option>
+                                <option value="Cordillera" {% if propiedad and propiedad.departamento == 'Cordillera' %}selected{% endif %}>Cordillera</option>
+                                <option value="Guairá" {% if propiedad and propiedad.departamento == 'Guairá' %}selected{% endif %}>Guairá</option>
+                                <option value="Itapúa" {% if propiedad and propiedad.departamento == 'Itapúa' %}selected{% endif %}>Itapúa</option>
+                                <option value="Misiones" {% if propiedad and propiedad.departamento == 'Misiones' %}selected{% endif %}>Misiones</option>
+                                <option value="Ñeembucú" {% if propiedad and propiedad.departamento == 'Ñeembucú' %}selected{% endif %}>Ñeembucú</option>
+                                <option value="Paraguarí" {% if propiedad and propiedad.departamento == 'Paraguarí' %}selected{% endif %}>Paraguarí</option>
+                                <option value="Presidente Hayes" {% if propiedad and propiedad.departamento == 'Presidente Hayes' %}selected{% endif %}>Presidente Hayes</option>
+                                <option value="San Pedro" {% if propiedad and propiedad.departamento == 'San Pedro' %}selected{% endif %}>San Pedro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="distrito" class="form-label">Distrito</label>
+                            <input type="text" name="distrito" class="form-control" 
+                                   value="{{ propiedad.distrito if propiedad else '' }}"
+                                   placeholder="Nombre del distrito">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="coordenadas" class="form-label">Coordenadas</label>
+                        <input type="text" name="coordenadas" class="form-control" 
+                               value="{{ propiedad.coordenadas if propiedad else '' }}"
+                               placeholder="Ej: -25.123456, -57.654321 o UTM">
+                        <div class="form-text">Puede ingresar coordenadas geográficas o UTM</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="mapa_url" class="form-label">URL del Mapa</label>
+                        <div class="input-group">
+                            <input type="url" name="mapa_url" id="mapa_url" class="form-control" 
+                                   value="{{ propiedad.mapa_url if propiedad else '' }}"
+                                   placeholder="https://ejemplo.com/mapa.png o sube una imagen">
+                            <button type="button" class="btn btn-outline-secondary" id="btn_subir_imagen" title="Subir imagen local">
+                                <i class="bi bi-upload"></i>
+                            </button>
+                        </div>
+                        <input type="file" name="mapa_archivo" id="mapa_archivo" class="d-none" 
+                               accept="image/*,.shp,.zip">
+                        <div class="form-text">URL de imagen del mapa, archivo SHP visualizado, o sube una imagen local</div>
+                        
+                        {% if propiedad and propiedad.mapa_url %}
+                        <div class="mt-2">
+                            <small class="text-muted">Vista previa:</small><br>
+                            <img src="{{ propiedad.mapa_url }}" class="img-thumbnail" 
+                                 style="max-height: 120px;" alt="Mapa actual"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                            <span class="text-warning small" style="display: none;">
+                                <i class="bi bi-exclamation-triangle"></i> No se puede cargar la imagen
+                            </span>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Vista previa para imágenes nuevas -->
+                        <div id="nueva_imagen_preview" class="mt-2" style="display: none;">
+                            <small class="text-muted">Nueva imagen:</small><br>
+                            <img id="preview_img" class="img-thumbnail" style="max-height: 120px;" alt="Vista previa">
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="btn_quitar_imagen">
+                                <i class="bi bi-x"></i> Quitar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('propiedades.list_propiedades') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> 
+                            {% if propiedad %}Actualizar{% else %}Guardar{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Manejar la subida de imágenes
+document.addEventListener('DOMContentLoaded', function() {
+    const btnSubirImagen = document.getElementById('btn_subir_imagen');
+    const inputArchivo = document.getElementById('mapa_archivo');
+    const inputUrl = document.getElementById('mapa_url');
+    const previewContainer = document.getElementById('nueva_imagen_preview');
+    const previewImg = document.getElementById('preview_img');
+    const btnQuitar = document.getElementById('btn_quitar_imagen');
+    
+    // Abrir selector de archivos al hacer clic en el botón
+    btnSubirImagen.addEventListener('click', function() {
+        inputArchivo.click();
+    });
+    
+    // Manejar selección de archivo
+    inputArchivo.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Verificar que sea una imagen
+            if (file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.zip')) {
+                // Crear vista previa para imágenes
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        previewContainer.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    // Para archivos ZIP (SHP)
+                    previewImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjBmMGYwIi8+Cjx0ZXh0IHg9IjIwIiB5PSIyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjNjY2Ij5aSVA8L3RleHQ+Cjwvc3ZnPg==';
+                    previewContainer.style.display = 'block';
+                }
+                
+                // Limpiar el campo URL si hay archivo seleccionado
+                inputUrl.value = '';
+                
+                // Actualizar el placeholder del input URL
+                inputUrl.placeholder = `Archivo seleccionado: ${file.name}`;
+                
+            } else {
+                alert('Por favor selecciona una imagen (JPG, PNG, GIF) o un archivo ZIP con datos SHP.');
+                inputArchivo.value = '';
+            }
+        }
+    });
+    
+    // Quitar imagen seleccionada
+    btnQuitar.addEventListener('click', function() {
+        inputArchivo.value = '';
+        previewContainer.style.display = 'none';
+        inputUrl.placeholder = 'https://ejemplo.com/mapa.png o sube una imagen';
+    });
+    
+    // Si se escribe en URL, limpiar archivo seleccionado
+    inputUrl.addEventListener('input', function() {
+        if (this.value.trim()) {
+            inputArchivo.value = '';
+            previewContainer.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

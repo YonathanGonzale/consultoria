@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if vencimiento %}Editar Vencimiento{% else %}Nuevo Vencimiento{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    {% if vencimiento %}
+                        <i class="bi bi-pencil"></i> Editar Vencimiento
+                    {% else %}
+                        <i class="bi bi-plus-circle"></i> Nuevo Vencimiento
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="id_cliente" class="form-label">Cliente *</label>
+                            <select name="id_cliente" id="id_cliente" class="form-select" required>
+                                <option value="">Seleccione un cliente</option>
+                                {% for cliente in clientes %}
+                                <option value="{{ cliente.id_cliente }}" 
+                                        {% if vencimiento and vencimiento.id_cliente == cliente.id_cliente %}selected{% endif %}>
+                                    {{ cliente.nombre_razon_social }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="tipo_documento" class="form-label">Tipo de Documento *</label>
+                            <select name="tipo_documento" id="tipo_documento" class="form-select" required>
+                                <option value="">Seleccione el tipo de documento</option>
+                                {% for tipo in tipos_documento %}
+                                <option value="{{ tipo }}" 
+                                        {% if vencimiento and vencimiento.tipo_documento == tipo %}selected{% endif %}>
+                                    {{ tipo }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="estado" class="form-label">Estado</label>
+                            <select name="estado" id="estado" class="form-select">
+                                <option value="vigente" {% if not vencimiento or vencimiento.estado == 'vigente' %}selected{% endif %}>
+                                    Vigente
+                                </option>
+                                <option value="vencido" {% if vencimiento and vencimiento.estado == 'vencido' %}selected{% endif %}>
+                                    Vencido
+                                </option>
+                                <option value="renovado" {% if vencimiento and vencimiento.estado == 'renovado' %}selected{% endif %}>
+                                    Renovado
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="fecha_emision" class="form-label">Fecha de Emisión *</label>
+                            <input type="date" name="fecha_emision" id="fecha_emision" class="form-control" 
+                                   value="{{ vencimiento.fecha_emision.strftime('%Y-%m-%d') if vencimiento else '' }}"
+                                   required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento *</label>
+                            <input type="date" name="fecha_vencimiento" id="fecha_vencimiento" class="form-control" 
+                                   value="{{ vencimiento.fecha_vencimiento.strftime('%Y-%m-%d') if vencimiento else '' }}"
+                                   required>
+                            <div class="form-text" id="dias_restantes"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_propiedad" class="form-label">Propiedad (Opcional)</label>
+                        <select name="id_propiedad" id="id_propiedad" class="form-select">
+                            <option value="">Sin propiedad específica</option>
+                            {% if vencimiento and propiedades %}
+                                {% for propiedad in propiedades %}
+                                <option value="{{ propiedad.id_propiedad }}" 
+                                        {% if vencimiento.id_propiedad == propiedad.id_propiedad %}selected{% endif %}>
+                                    {% if propiedad.finca %}
+                                        Finca: {{ propiedad.finca }}
+                                    {% else %}
+                                        Sin finca
+                                    {% endif %}
+                                    {% if propiedad.departamento %}
+                                        - {{ propiedad.departamento }}
+                                        {% if propiedad.distrito %}, {{ propiedad.distrito }}{% endif %}
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                        <div class="form-text">Seleccione una propiedad si el documento está asociado a una ubicación específica</div>
+                    </div>
+
+                    {% if vencimiento %}
+                    <!-- Información de notificaciones -->
+                    <div class="card bg-light mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="bi bi-bell"></i> Historial de Notificaciones
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% if vencimiento.notificaciones %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Tipo</th>
+                                                <th>Fecha de Envío</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for notificacion in vencimiento.notificaciones %}
+                                            <tr>
+                                                <td>
+                                                    {% if notificacion.tipo == '30_dias' %}
+                                                        <span class="badge bg-info">30 días antes</span>
+                                                    {% elif notificacion.tipo == '7_dias' %}
+                                                        <span class="badge bg-warning">7 días antes</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">{{ notificacion.tipo }}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ notificacion.fecha_envio.strftime('%d/%m/%Y') }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">No se han enviado notificaciones para este vencimiento.</p>
+                            {% endif %}
+
+                            {% set tipo_notif = vencimiento.necesita_notificacion() %}
+                            {% if tipo_notif %}
+                                <div class="alert alert-warning mt-2 mb-0">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    Este vencimiento necesita notificación de <strong>{{ tipo_notif.replace('_', ' ') }}</strong>.
+                                    <a href="{{ url_for('vencimientos.marcar_notificado', id_vencimiento=vencimiento.id_vencimiento) }}" 
+                                       class="btn btn-sm btn-warning ms-2">
+                                        Marcar como notificado
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Vista previa de estado -->
+                    <div class="card bg-light mb-3" id="preview_card" style="display: none;">
+                        <div class="card-body">
+                            <h6>Vista previa:</h6>
+                            <div id="preview_content"></div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('vencimientos.list_vencimientos') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> 
+                            {% if vencimiento %}Actualizar{% else %}Guardar{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clienteSelect = document.getElementById('id_cliente');
+    const propiedadSelect = document.getElementById('id_propiedad');
+    const fechaVencimiento = document.getElementById('fecha_vencimiento');
+    const diasRestantes = document.getElementById('dias_restantes');
+    const previewCard = document.getElementById('preview_card');
+    const previewContent = document.getElementById('preview_content');
+
+    // Cargar propiedades cuando cambie el cliente
+    clienteSelect.addEventListener('change', function() {
+        const clienteId = this.value;
+        
+        // Limpiar opciones actuales excepto la primera
+        propiedadSelect.innerHTML = '<option value="">Sin propiedad específica</option>';
+        
+        if (clienteId) {
+            fetch(`/vencimientos/api/propiedades-cliente/${clienteId}`)
+                .then(response => response.json())
+                .then(propiedades => {
+                    propiedades.forEach(propiedad => {
+                        const option = document.createElement('option');
+                        option.value = propiedad.id;
+                        option.textContent = `${propiedad.finca} - ${propiedad.ubicacion}`;
+                        propiedadSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading propiedades:', error));
+        }
+    });
+
+    // Calcular días restantes y mostrar vista previa
+    function updatePreview() {
+        const fechaVenc = fechaVencimiento.value;
+        if (fechaVenc) {
+            const hoy = new Date();
+            const vencimiento = new Date(fechaVenc);
+            const diferencia = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
+            
+            let mensaje = '';
+            let clase = '';
+            
+            if (diferencia < 0) {
+                mensaje = `Vencido hace ${-diferencia} día(s)`;
+                clase = 'text-danger';
+            } else if (diferencia === 0) {
+                mensaje = 'Vence hoy';
+                clase = 'text-warning';
+            } else if (diferencia <= 7) {
+                mensaje = `Vence en ${diferencia} día(s) - URGENTE`;
+                clase = 'text-warning';
+            } else if (diferencia <= 30) {
+                mensaje = `Vence en ${diferencia} día(s)`;
+                clase = 'text-info';
+            } else {
+                mensaje = `Vence en ${diferencia} día(s)`;
+                clase = 'text-success';
+            }
+            
+            diasRestantes.innerHTML = `<span class="${clase}"><i class="bi bi-calendar-event"></i> ${mensaje}</span>`;
+            
+            // Mostrar preview
+            let estadoBadge = '';
+            if (diferencia < 0) {
+                estadoBadge = '<span class="badge bg-danger">Vencido</span>';
+            } else if (diferencia <= 7) {
+                estadoBadge = '<span class="badge bg-warning">Urgente</span>';
+            } else if (diferencia <= 30) {
+                estadoBadge = '<span class="badge bg-info">Próximo a vencer</span>';
+            } else {
+                estadoBadge = '<span class="badge bg-success">Vigente</span>';
+            }
+            
+            previewContent.innerHTML = `Estado: ${estadoBadge} | Días restantes: ${diferencia}`;
+            previewCard.style.display = 'block';
+        } else {
+            diasRestantes.innerHTML = '';
+            previewCard.style.display = 'none';
+        }
+    }
+    
+    fechaVencimiento.addEventListener('change', updatePreview);
+    
+    // Ejecutar al cargar si ya hay fecha
+    if (fechaVencimiento.value) {
+        updatePreview();
+    }
+
+    // Validación de fechas
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const fechaEmision = new Date(document.getElementById('fecha_emision').value);
+        const fechaVenc = new Date(fechaVencimiento.value);
+        
+        if (fechaEmision > fechaVenc) {
+            e.preventDefault();
+            alert('La fecha de emisión no puede ser posterior a la fecha de vencimiento.');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

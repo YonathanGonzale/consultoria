@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Propiedades{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Propiedades</h2>
+    <a href="{{ url_for('propiedades.nueva_propiedad') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Agregar Propiedad
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <form method="GET" class="d-flex">
+            <input type="text" name="q" class="form-control me-2" 
+                   placeholder="Buscar por finca, matrícula, padrón o cliente..." 
+                   value="{{ q }}">
+            <input type="hidden" name="cliente_id" value="{{ cliente_id }}">
+            <button type="submit" class="btn btn-outline-secondary">
+                <i class="bi bi-search"></i> Buscar
+            </button>
+        </form>
+    </div>
+    <div class="col-md-4">
+        <select name="cliente_id" class="form-select" onchange="this.form.submit()">
+            <option value="">Todos los clientes</option>
+            {% for cliente in clientes %}
+            <option value="{{ cliente.id_cliente }}" 
+                    {% if cliente_id|string == cliente.id_cliente|string %}selected{% endif %}>
+                {{ cliente.nombre_razon_social }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<!-- Tabla de propiedades -->
+<div class="card">
+    <div class="card-body">
+        {% if propiedades %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Finca</th>
+                        <th>Matrícula</th>
+                        <th>Padrón</th>
+                        <th>Superficie (ha)</th>
+                        <th>Ubicación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for propiedad, cliente in propiedades %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('clientes.instituciones', id_cliente=cliente.id_cliente) }}" 
+                               class="text-decoration-none">
+                                {{ cliente.nombre_razon_social }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('propiedades.detalle_propiedad', id_propiedad=propiedad.id_propiedad) }}" 
+                               class="text-decoration-none">
+                                {{ propiedad.finca or '-' }}
+                            </a>
+                        </td>
+                        <td>{{ propiedad.matricula or '-' }}</td>
+                        <td>{{ propiedad.padron or '-' }}</td>
+                        <td>
+                            {% if propiedad.superficie_ha %}
+                                {{ "{:,.1f}".format(propiedad.superficie_ha) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if propiedad.departamento and propiedad.distrito %}
+                                {{ propiedad.departamento }}, {{ propiedad.distrito }}
+                            {% elif propiedad.departamento %}
+                                {{ propiedad.departamento }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" 
+                                        data-bs-toggle="dropdown">
+                                    Acciones
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" 
+                                           href="{{ url_for('propiedades.detalle_propiedad', id_propiedad=propiedad.id_propiedad) }}">
+                                            <i class="bi bi-eye"></i> Ver detalle
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" 
+                                           href="{{ url_for('propiedades.editar_propiedad', id_propiedad=propiedad.id_propiedad) }}">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" 
+                                              action="{{ url_for('propiedades.eliminar_propiedad', id_propiedad=propiedad.id_propiedad) }}"
+                                              onsubmit="return confirm('¿Está seguro de eliminar esta propiedad?')" 
+                                              class="d-inline">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-house-door text-muted" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-3">
+                {% if q or cliente_id %}
+                    No se encontraron propiedades con los filtros aplicados.
+                {% else %}
+                    No hay propiedades registradas.
+                {% endif %}
+            </p>
+            <a href="{{ url_for('propiedades.nueva_propiedad') }}" class="btn btn-primary">
+                Agregar primera propiedad
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Agregar funcionalidad al filtro por cliente
+document.querySelector('select[name="cliente_id"]').addEventListener('change', function() {
+    const form = document.createElement('form');
+    form.method = 'GET';
+    
+    // Mantener el término de búsqueda
+    if ('{{ q }}') {
+        const qInput = document.createElement('input');
+        qInput.type = 'hidden';
+        qInput.name = 'q';
+        qInput.value = '{{ q }}';
+        form.appendChild(qInput);
+    }
+    
+    // Agregar cliente_id seleccionado
+    const clienteInput = document.createElement('input');
+    clienteInput.type = 'hidden';
+    clienteInput.name = 'cliente_id';
+    clienteInput.value = this.value;
+    form.appendChild(clienteInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+});
+</script>
+{% endblock %}
