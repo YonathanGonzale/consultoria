@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required
 from ..models import Cliente, Proyecto, Propiedad
 from ..extensions import db
-from datetime import date, datetime
+from datetime import date
 
 bp = Blueprint("mades", __name__, url_prefix="/mades")
 
@@ -19,8 +19,25 @@ def index():
 @bp.route("/cliente/<int:id_cliente>")
 @login_required
 def cliente_board(id_cliente):
-    # Redirigimos al tablero unificado de proyectos usando inst='MADES'
-    return redirect(url_for('proyectos.board', id_cliente=id_cliente, inst='MADES'))
+    cliente = Cliente.query.get_or_404(id_cliente)
+    proyectos = Proyecto.query.filter_by(
+        id_cliente=id_cliente, institucion="MADES"
+    ).order_by(Proyecto.anho.desc(), Proyecto.id_proyecto.desc()).all()
+    props = Propiedad.query.filter_by(id_cliente=id_cliente).all()
+
+    estados = ["en proceso", "entregado", "finalizado", "pendiente"]
+    cols = {e: [] for e in estados}
+    for p in proyectos:
+        e = (p.estado or "pendiente").lower()
+        cols[e if e in cols else "pendiente"].append(p)
+
+    return render_template(
+        "mades/board.html",
+        cliente=cliente,
+        institucion="MADES",
+        cols=cols,
+        propiedades=props,
+    )
 
 # Crear proyecto rápido MADES
 @bp.route("/crear", methods=["POST"])
@@ -30,20 +47,9 @@ def crear():
     anho = int(request.form.get("anho") or date.today().year)
     tipo_tramite = request.form.get("tipo_tramite")
     estado = request.form.get("estado") or "pendiente"
-    id_propiedad_raw = request.form.get("id_propiedad") or None
-    id_propiedad = int(id_propiedad_raw) if id_propiedad_raw else None
-
-    # Parseo de fechas (esperado input type=date -> YYYY-MM-DD)
-    def _parse_date(val):
-        if not val:
-            return None
-        try:
-            return datetime.strptime(val, "%Y-%m-%d").date()
-        except ValueError:
-            return None
-
-    fecha_firma = _parse_date(request.form.get("fecha_firma_contrato"))
-    plazo_limite = _parse_date(request.form.get("plazo_limite"))
+    id_propiedad = request.form.get("id_propiedad") or None
+    fecha_firma = request.form.get("fecha_firma_contrato") or None
+    plazo_limite = request.form.get("plazo_limite") or None
 
     proyecto = Proyecto(
         id_cliente=id_cliente,

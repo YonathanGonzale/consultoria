@@ -3,7 +3,7 @@ from .extensions import db
 
 
 class Cliente(db.Model):
-    __tablename__ = 'CLIENTE'
+    __tablename__ = 'cliente'
     id_cliente = db.Column(db.Integer, primary_key=True)
     nombre_razon_social = db.Column(db.String(255))
     contacto = db.Column(db.String(255))
@@ -17,9 +17,9 @@ class Cliente(db.Model):
 
 
 class Propiedad(db.Model):
-    __tablename__ = 'PROPIEDAD'
+    __tablename__ = 'propiedad'
     id_propiedad = db.Column(db.Integer, primary_key=True)
-    id_cliente = db.Column(db.Integer, db.ForeignKey('CLIENTE.id_cliente'))
+    id_cliente = db.Column(db.Integer, db.ForeignKey('cliente.id_cliente'))
     finca = db.Column(db.String(100))
     matricula = db.Column(db.String(100))
     padron = db.Column(db.String(100))
@@ -34,16 +34,16 @@ class Propiedad(db.Model):
 
 
 class Proyecto(db.Model):
-    __tablename__ = 'PROYECTO'
+    __tablename__ = 'proyecto'
     id_proyecto = db.Column(db.Integer, primary_key=True)
-    id_cliente = db.Column(db.Integer, db.ForeignKey('CLIENTE.id_cliente'))
+    id_cliente = db.Column(db.Integer, db.ForeignKey('cliente.id_cliente'))
     anho = db.Column(db.Integer)
     institucion = db.Column(db.String(100))
     tipo_tramite = db.Column(db.String(100))
     fecha_firma_contrato = db.Column(db.Date)
     estado = db.Column(db.String(50))
     plazo_limite = db.Column(db.Date)
-    id_propiedad = db.Column(db.Integer, db.ForeignKey('PROPIEDAD.id_propiedad'))
+    id_propiedad = db.Column(db.Integer, db.ForeignKey('propiedad.id_propiedad'))
 
     documentos = db.relationship('DocumentoProyecto', backref='proyecto', lazy=True)
     pagos = db.relationship('Pago', backref='proyecto', lazy=True)
@@ -51,47 +51,47 @@ class Proyecto(db.Model):
 
 
 class DocumentoProyecto(db.Model):
-    __tablename__ = 'DOCUMENTO_PROYECTO'
+    __tablename__ = 'documento_proyecto'
     id_documento = db.Column(db.Integer, primary_key=True)
-    id_proyecto = db.Column(db.Integer, db.ForeignKey('PROYECTO.id_proyecto'))
+    id_proyecto = db.Column(db.Integer, db.ForeignKey('proyecto.id_proyecto'))
     tipo = db.Column(db.String(100))
     archivo_url = db.Column(db.Text)
 
 
 class Pago(db.Model):
-    __tablename__ = 'PAGO'
+    __tablename__ = 'pago'
     id_pago = db.Column(db.Integer, primary_key=True)
-    id_proyecto = db.Column(db.Integer, db.ForeignKey('PROYECTO.id_proyecto'))
+    id_proyecto = db.Column(db.Integer, db.ForeignKey('proyecto.id_proyecto'))
     monto_total = db.Column(db.Numeric(12, 2))
     porcentaje_pago_inicial = db.Column(db.Numeric(5, 2))
     saldo_restante = db.Column(db.Numeric(12, 2))
 
 
 class Factura(db.Model):
-    __tablename__ = 'FACTURA'
+    __tablename__ = 'factura'
     id_factura = db.Column(db.Integer, primary_key=True)
-    id_proyecto = db.Column(db.Integer, db.ForeignKey('PROYECTO.id_proyecto'))
+    id_proyecto = db.Column(db.Integer, db.ForeignKey('proyecto.id_proyecto'))
     monto = db.Column(db.Numeric(12, 2))
     fecha_emision = db.Column(db.Date)
     comprobado = db.Column(db.Boolean, default=False)
 
 
 class Vencimiento(db.Model):
-    __tablename__ = 'VENCIMIENTO'
+    __tablename__ = 'vencimiento'
     id_vencimiento = db.Column(db.Integer, primary_key=True)
-    id_cliente = db.Column(db.Integer, db.ForeignKey('CLIENTE.id_cliente'))
+    id_cliente = db.Column(db.Integer, db.ForeignKey('cliente.id_cliente'))
     tipo_documento = db.Column(db.String(100))
     fecha_emision = db.Column(db.Date)
     fecha_vencimiento = db.Column(db.Date)
-    id_propiedad = db.Column(db.Integer, db.ForeignKey('PROPIEDAD.id_propiedad'))
+    id_propiedad = db.Column(db.Integer, db.ForeignKey('propiedad.id_propiedad'))
     estado = db.Column(db.String(50))
 
     notificaciones = db.relationship('Notificacion', backref='vencimiento', lazy=True)
 
 
 class Notificacion(db.Model):
-    __tablename__ = 'NOTIFICACION'
+    __tablename__ = 'notificacion'
     id_notificacion = db.Column(db.Integer, primary_key=True)
-    id_vencimiento = db.Column(db.Integer, db.ForeignKey('VENCIMIENTO.id_vencimiento'))
+    id_vencimiento = db.Column(db.Integer, db.ForeignKey('vencimiento.id_vencimiento'))
     tipo = db.Column(db.String(50))
     fecha_envio = db.Column(db.Date, default=date.today)

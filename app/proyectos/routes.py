@@ -1,8 +1,10 @@
 from datetime import date
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app, send_file, abort
+from werkzeug.utils import secure_filename
 from flask_login import login_required
 from ..extensions import db
-from ..models import Proyecto, Cliente, Propiedad
+from ..models import Proyecto, Cliente, Propiedad, DocumentoProyecto
 
 bp = Blueprint('proyectos', __name__)
 
@@ -53,6 +55,28 @@ def crear_quick():
     )
     db.session.add(p)
     db.session.commit()
+
+    # Manejo de archivo anexo opcional
+    file = request.files.get('anexo')
+    if file and file.filename:
+        # Validación básica de extensión
+        allowed = {'.jpg', '.jpeg', '.png', '.gif', '.pdf', '.webp'}
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext in allowed:
+            filename = secure_filename(f"proyecto_{p.id_proyecto}_{file.filename}")
+            base_upload = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+            target_dir = os.path.join(base_upload, 'proyectos')
+            os.makedirs(target_dir, exist_ok=True)
+            save_path = os.path.join(target_dir, filename)
+            file.save(save_path)
+
+            doc = DocumentoProyecto(
+                id_proyecto=p.id_proyecto,
+                tipo='anexo',
+                archivo_url=save_path
+            )
+            db.session.add(doc)
+            db.session.commit()
     flash('Proyecto creado', 'success')
     return redirect(url_for('proyectos.board', id_cliente=id_cliente, inst=institucion))
 
@@ -81,6 +105,52 @@ def editar(id_proyecto):
         p.fecha_firma_contrato = request.form.get('fecha_firma_contrato') or None
         p.plazo_limite = request.form.get('plazo_limite') or None
         db.session.commit()
+
+        # Manejo de archivo anexo opcional en edición
+        file = request.files.get('anexo')
+        if file and file.filename:
+            allowed = {'.jpg', '.jpeg', '.png', '.gif', '.pdf', '.webp'}
+            ext = os.path.splitext(file.filename)[1].lower()
+            if ext in allowed:
+                filename = secure_filename(f"proyecto_{p.id_proyecto}_{file.filename}")
+                base_upload = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+                target_dir = os.path.join(base_upload, 'proyectos')
+                os.makedirs(target_dir, exist_ok=True)
+                save_path = os.path.join(target_dir, filename)
+                file.save(save_path)
+
+                doc = DocumentoProyecto(
+                    id_proyecto=p.id_proyecto,
+                    tipo='anexo',
+                    archivo_url=save_path
+                )
+                db.session.add(doc)
+                db.session.commit()
         flash('Proyecto actualizado', 'success')
         return redirect(url_for('proyectos.board', id_cliente=p.id_cliente, inst=p.institucion))
     return render_template('proyectos/edit.html', p=p, propiedades=props)
+
+@bp.route('/doc/<int:id_doc>/eliminar', methods=['POST'])
+@login_required
+def eliminar_doc(id_doc):
+    doc = DocumentoProyecto.query.get_or_404(id_doc)
+    proyecto = Proyecto.query.get_or_404(doc.id_proyecto)
+    # Intentar borrar el archivo físico
+    try:
+        if doc.archivo_url and os.path.exists(doc.archivo_url):
+            os.remove(doc.archivo_url)
+    except Exception:
+        pass
+    db.session.delete(doc)
+    db.session.commit()
+    flash('Documento eliminado', 'success')
+    return redirect(url_for('proyectos.editar', id_proyecto=proyecto.id_proyecto))
+
+@bp.route('/doc/<int:id_doc>/descargar', methods=['GET'])
+@login_required
+def descargar_doc(id_doc):
+    doc = DocumentoProyecto.query.get_or_404(id_doc)
+    if not doc.archivo_url or not os.path.exists(doc.archivo_url):
+        abort(404)
+    # as_attachment=True para forzar descarga
+    return send_file(doc.archivo_url, as_attachment=True)

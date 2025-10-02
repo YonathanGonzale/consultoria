@@ -36,7 +36,7 @@
 <div class="modal fade" id="modalNuevo" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="post" action="{{ url_for('proyectos.crear_quick') }}">
+      <form method="post" action="{{ url_for('proyectos.crear_quick') }}" enctype="multipart/form-data">
         <div class="modal-header"><h5 class="modal-title">Nuevo Proyecto</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
@@ -78,6 +78,11 @@
               <label class="form-label">Plazo límite</label>
               <input type="date" class="form-control" name="plazo_limite">
             </div>
+          </div>
+          <div class="mt-3">
+            <label class="form-label">Documentación anexa (opcional)</label>
+            <input type="file" class="form-control" name="anexo" accept=".jpg,.jpeg,.png,.gif,.pdf,.webp,image/*">
+            <div class="form-text">Podés adjuntar imágenes (JPG/PNG) o PDF como contrato, notas firmadas, mapas, etc.</div>
           </div>
         </div>
         <div class="modal-footer">

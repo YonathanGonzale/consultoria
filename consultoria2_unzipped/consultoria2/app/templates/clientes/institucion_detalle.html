@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex align-items-center gap-3">
+    <img src="{{ url_for('static', filename='img/logo_cliente.png') }}" 
+         alt="MasterTerra Logo" class="rounded" style="height:38px;">
+    <div>
+      <div class="fw-semibold">{{ cliente.nombre_razon_social }} - {{ institucion }}</div>
+      <div class="text-muted small">Selecciona el tipo de trámite</div>
+    </div>
+  </div>
+  <a href="{{ url_for('clientes.nuevo_cliente') }}" class="btn btn-masterterra">Agregar Cliente</a>
+</div>
+
+<div class="row g-3">
+  {% for t in tipos %}
+  <div class="col-md-3">
+    <a class="btn btn-{{ t.color }} tramite-card" 
+       href="{{ url_for('proyectos.board', id_cliente=cliente.id_cliente, inst=institucion, tipo=t.name) }}">
+      <div class="tramite-icon"><i class="bi {{ t.icon }}"></i></div>
+      <div class="tramite-title">{{ t.name }}</div>
+      <div class="tramite-desc">{{ t.desc }}</div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if proyecto %}Editar Proyecto{% else %}Nuevo Proyecto{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    {% if proyecto %}
+                        <i class="bi bi-pencil"></i> Editar Proyecto
+                    {% else %}
+                        <i class="bi bi-plus-circle"></i> Nuevo Proyecto
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="proyectoForm">
+                    <div class="row">
+                        <!-- Información básica -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Información Básica</h5>
+                            
+                            <div class="mb-3">
+                                <label for="id_cliente" class="form-label">Cliente *</label>
+                                <select name="id_cliente" id="id_cliente" class="form-select" required>
+                                    <option value="">Seleccione un cliente</option>
+                                    {% for cliente in clientes %}
+                                    <option value="{{ cliente.id_cliente }}" 
+                                            {% if selected_cliente|string == cliente.id_cliente|string %}selected{% endif %}>
+                                        {{ cliente.nombre_razon_social }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_propiedad" class="form-label">Propiedad *</label>
+                                <select name="id_propiedad" id="id_propiedad" class="form-select" required>
+                                    <option value="">Seleccione una propiedad</option>
+                                    {% for propiedad in propiedades %}
+                                    <option value="{{ propiedad.id_propiedad }}" 
+                                            {% if selected_propiedad|string == propiedad.id_propiedad|string %}selected{% endif %}>
+                                        {{ propiedad.display_name }}
+                                        {% if propiedad.ubicacion_completa %} - {{ propiedad.ubicacion_completa }}{% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="anho" class="form-label">Año *</label>
+                                    <input type="number" name="anho" id="anho" class="form-control" 
+                                           min="2020" max="2030" required
+                                           value="{{ proyecto.anho if proyecto else '' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="institucion" class="form-label">Institución *</label>
+                                    <select name="institucion" id="institucion" class="form-select" required>
+                                        <option value="">Seleccione institución</option>
+                                        {% for inst in instituciones %}
+                                        <option value="{{ inst.key }}" 
+                                                {% if proyecto and proyecto.institucion == inst.key %}selected{% endif %}>
+                                            {{ inst.key }} - {{ inst.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="tipo_tramite" class="form-label">Tipo de Trámite *</label>
+                                <select name="tipo_tramite" id="tipo_tramite" class="form-select" required>
+                                    <option value="">Seleccione tipo de trámite</option>
+                                    {% if proyecto %}
+                                        <option value="{{ proyecto.tipo_tramite }}" selected>{{ proyecto.tipo_tramite }}</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="estado" class="form-label">Estado</label>
+                                <select name="estado" id="estado" class="form-select">
+                                    <option value="pendiente" {% if not proyecto or proyecto.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                                    <option value="en proceso" {% if proyecto and proyecto.estado == 'en proceso' %}selected{% endif %}>En Proceso</option>
+                                    <option value="entregado" {% if proyecto and proyecto.estado == 'entregado' %}selected{% endif %}>Entregado</option>
+                                    <option value="finalizado" {% if proyecto and proyecto.estado == 'finalizado' %}selected{% endif %}>Finalizado</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Fechas y pagos -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Fechas y Pagos</h5>
+                            
+                            <div class="mb-3">
+                                <label for="fecha_firma_contrato" class="form-label">Fecha Firma Contrato</label>
+                                <input type="date" name="fecha_firma_contrato" id="fecha_firma_contrato" 
+                                       class="form-control"
+                                       value="{{ proyecto.fecha_firma_contrato.strftime('%Y-%m-%d') if proyecto and proyecto.fecha_firma_contrato else '' }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="plazo_limite" class="form-label">Plazo Límite</label>
+                                <input type="date" name="plazo_limite" id="plazo_limite" 
+                                       class="form-control"
+                                       value="{{ proyecto.plazo_limite.strftime('%Y-%m-%d') if proyecto and proyecto.plazo_limite else '' }}">
+                            </div>
+
+                            <hr>
+                            <h6>Información de Pago</h6>
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <label for="monto_total" class="form-label">Monto Total</label>
+                                    <input type="number" name="monto_total" id="monto_total" 
+                                           class="form-control" step="0.01" min="0"
+                                           value="{{ pago_info.monto_total if pago_info else '' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="porcentaje_pago_inicial" class="form-label">% Inicial</label>
+                                    <input type="number" name="porcentaje_pago_inicial" id="porcentaje_pago_inicial" 
+                                           class="form-control" step="0.01" min="0" max="100"
+                                           value="{{ pago_info.porcentaje_pago_inicial if pago_info else '' }}">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Resumen de Pagos</label>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="row text-center">
+                                            <div class="col-4">
+                                                <div class="fw-bold" id="pago_inicial_calc">-</div>
+                                                <small class="text-muted">Pago Inicial</small>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="fw-bold" id="saldo_restante_calc">-</div>
+                                                <small class="text-muted">Saldo Restante</small>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="fw-bold" id="monto_total_calc">-</div>
+                                                <small class="text-muted">Total</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ url_for('proyectos.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> 
+                            {% if proyecto %}Actualizar{% else %}Guardar{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tipos de trámite por institución
+const tiposTramite = JSON.parse('{{ tipos_tramite|tojson|safe }}');
+
+// Cargar propiedades cuando cambia el cliente
+document.getElementById('id_cliente').addEventListener('change', function() {
+    const clienteId = this.value;
+    const propiedadSelect = document.getElementById('id_propiedad');
+    
+    propiedadSelect.innerHTML = '<option value="">Seleccione una propiedad</option>';
+    
+    if (clienteId) {
+        fetch(`/proyectos/api/propiedades/${clienteId}`)
+            .then(response => response.json())
+            .then(propiedades => {
+                propiedades.forEach(propiedad => {
+                    const option = document.createElement('option');
+                    option.value = propiedad.id_propiedad;
+                    option.textContent = propiedad.display_name;
+                    if (propiedad.ubicacion) {
+                        option.textContent += ` - ${propiedad.ubicacion}`;
+                    }
+                    propiedadSelect.appendChild(option);
+                });
+            });
+    }
+});
+
+// Cargar tipos de trámite cuando cambia la institución
+document.getElementById('institucion').addEventListener('change', function() {
+    const institucion = this.value;
+    const tipoTramiteSelect = document.getElementById('tipo_tramite');
+    
+    tipoTramiteSelect.innerHTML = '<option value="">Seleccione tipo de trámite</option>';
+    
+    if (institucion && tiposTramite[institucion]) {
+        tiposTramite[institucion].forEach(tipo => {
+            const option = document.createElement('option');
+            option.value = tipo;
+            option.textContent = tipo;
+            tipoTramiteSelect.appendChild(option);
+        });
+    }
+});
+
+// Calcular pagos automáticamente
+function calcularPagos() {
+    const montoTotal = parseFloat(document.getElementById('monto_total').value) || 0;
+    const porcentajeInicial = parseFloat(document.getElementById('porcentaje_pago_inicial').value) || 0;
+    
+    const pagoInicial = montoTotal * (porcentajeInicial / 100);
+    const saldoRestante = montoTotal - pagoInicial;
+    
+    document.getElementById('pago_inicial_calc').textContent = 
+        pagoInicial > 0 ? `${pagoInicial.toLocaleString()}` : '-';
+    document.getElementById('saldo_restante_calc').textContent = 
+        saldoRestante > 0 ? `${saldoRestante.toLocaleString()}` : '-';
+    document.getElementById('monto_total_calc').textContent = 
+        montoTotal > 0 ? `${montoTotal.toLocaleString()}` : '-';
+}
+
+document.getElementById('monto_total').addEventListener('input', calcularPagos);
+document.getElementById('porcentaje_pago_inicial').addEventListener('input', calcularPagos);
+
+// Calcular al cargar la página si hay datos
+document.addEventListener('DOMContentLoaded', function() {
+    calcularPagos();
+    
+    // Si estamos editando y hay institución seleccionada, cargar tipos de trámite
+    const institucionSelect = document.getElementById('institucion');
+    if (institucionSelect.value) {
+        const event = new Event('change');
+        institucionSelect.dispatchEvent(event);
+    }
+});
+</script>
+{% endblock %}

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <h4>Editar Proyecto #{{ p.id_proyecto }}</h4>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
   <div class="row g-3">
     <div class="col-md-2">
       <label class="form-label">Año</label>
@@ -38,6 +38,11 @@
     </div>
   </div>
   <div class="mt-3">
+    <div class="mb-3">
+      <label class="form-label">Agregar documentación anexa</label>
+      <input type="file" class="form-control" name="anexo" accept=".jpg,.jpeg,.png,.gif,.pdf,.webp,image/*">
+      <div class="form-text">Podés adjuntar imágenes o PDF (contrato, notas firmadas, mapas, etc.).</div>
+    </div>
     <button class="btn btn-primary">Guardar</button>
     <a href="{{ url_for('proyectos.board', id_cliente=p.id_cliente, inst=p.institucion) }}" class="btn btn-secondary">Volver</a>
   </div>
