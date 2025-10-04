@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <h4>Nuevo Proyecto</h4>
+    
+    <form method="POST" enctype="multipart/form-data">
+      <div class="row g-3">
+        <!-- Cliente -->
+        <div class="col-md-6">
+          <label class="form-label">Cliente *</label>
+          <select name="id_cliente" id="id_cliente" class="form-select" required>
+            <option value="">Seleccionar cliente...</option>
+            {% for cliente in clientes %}
+            <option value="{{ cliente.id_cliente }}">{{ cliente.nombre_razon_social }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Institución -->
+        <div class="col-md-6">
+          <label class="form-label">Institución *</label>
+          <select name="institucion" class="form-select" required>
+            <option value="">Seleccionar institución...</option>
+            <option value="MADES">MADES</option>
+            <option value="DINAC">DINAC</option>
+            <option value="SENAVE">SENAVE</option>
+            <option value="SEAM">SEAM</option>
+            <option value="Municipalidad">Municipalidad</option>
+            <option value="Otros">Otros</option>
+          </select>
+        </div>
+
+        <!-- Año -->
+        <div class="col-md-4">
+          <label class="form-label">Año</label>
+          <input type="number" name="anho" class="form-control" value="{{ anho_actual }}" min="2020" max="2030">
+        </div>
+
+        <!-- Tipo de Trámite -->
+        <div class="col-md-8">
+          <label class="form-label">Tipo de Trámite *</label>
+          <select name="tipo_tramite" class="form-select" required>
+            <option value="">Seleccionar tipo...</option>
+            <option value="EIA y EDE">EIA y EDE</option>
+            <option value="Reforestación">Reforestación</option>
+            <option value="Plan de Manejo">Plan de Manejo</option>
+            <option value="Licencia Ambiental">Licencia Ambiental</option>
+            <option value="Consultoría General">Consultoría General</option>
+            <option value="Otros">Otros</option>
+          </select>
+        </div>
+
+        <!-- Estado -->
+        <div class="col-md-6">
+          <label class="form-label">Estado</label>
+          <select name="estado" class="form-select">
+            <option value="pendiente" selected>Pendiente</option>
+            <option value="en proceso">En Proceso</option>
+            <option value="entregado">Entregado</option>
+            <option value="finalizado">Finalizado</option>
+          </select>
+        </div>
+
+        <!-- Propiedad -->
+        <div class="col-md-6">
+          <label class="form-label">Propiedad (Opcional)</label>
+          <select name="id_propiedad" id="id_propiedad" class="form-select">
+            <option value="">Seleccionar propiedad...</option>
+          </select>
+          <small class="form-text text-muted">Seleccione primero un cliente para ver sus propiedades</small>
+        </div>
+
+        <!-- Fecha Firma Contrato -->
+        <div class="col-md-6">
+          <label class="form-label">Fecha Firma Contrato</label>
+          <input type="date" name="fecha_firma_contrato" class="form-control">
+        </div>
+
+        <!-- Plazo Límite -->
+        <div class="col-md-6">
+          <label class="form-label">Plazo Límite</label>
+          <input type="date" name="plazo_limite" class="form-control">
+        </div>
+
+        <!-- Archivo Anexo -->
+        <div class="col-12">
+          <label class="form-label">Archivo Anexo (Opcional)</label>
+          <input type="file" name="anexo" class="form-control" accept=".jpg,.jpeg,.png,.gif,.pdf,.webp">
+          <small class="form-text text-muted">Formatos permitidos: JPG, PNG, GIF, PDF, WEBP</small>
+        </div>
+
+        <!-- Botones -->
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary">Crear Proyecto</button>
+          <a href="{{ url_for('proyectos.index') }}" class="btn btn-secondary ms-2">Cancelar</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clienteSelect = document.getElementById('id_cliente');
+    const propiedadSelect = document.getElementById('id_propiedad');
+    
+    clienteSelect.addEventListener('change', function() {
+        const clienteId = this.value;
+        
+        // Limpiar opciones de propiedad
+        propiedadSelect.innerHTML = '<option value="">Seleccionar propiedad...</option>';
+        
+        if (clienteId) {
+            // Cargar propiedades del cliente seleccionado
+            fetch(`/proyectos/api/cliente/${clienteId}/propiedades`)
+                .then(response => response.json())
+                .then(propiedades => {
+                    propiedades.forEach(prop => {
+                        const option = document.createElement('option');
+                        option.value = prop.id_propiedad;
+                        option.textContent = `${prop.finca} - Padrón: ${prop.padron || 'N/A'}`;
+                        propiedadSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error cargando propiedades:', error);
+                });
+        }
+    });
+});
+</script>
+{% endblock %}
