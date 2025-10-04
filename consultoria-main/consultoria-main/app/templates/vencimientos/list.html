@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.table tbody tr.table-danger-custom,
+.table tbody tr.table-danger-custom td {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+</style>
+<h4>Próximos Vencimientos</h4>
+<form class="row g-2 mb-3">
+  <div class="col-md-3">
+    <label class="form-label">Mes (YYYY-MM)</label>
+    <input type="month" class="form-control" name="mes">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Cliente</label>
+    <select name="cliente_id" class="form-select">
+      <option value="">Todos</option>
+      {% for c in clientes %}
+      <option value="{{ c.id_cliente }}">{{ c.nombre_razon_social }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2 align-self-end">
+    <button class="btn btn-outline-primary w-100">Filtrar</button>
+  </div>
+</form>
+
+<table class="table">
+  <thead><tr><th>Cliente</th><th>Tipo</th><th>Emisión</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+  <tbody>
+    {% for p in proyectos %}
+    <tr class="{{ p.row_class }}" title="{% if p.dias_restantes is not none %}{{ p.dias_restantes }} días restantes{% endif %}">
+      <td>{{ p.cliente.nombre_razon_social if p.cliente else '-' }}</td>
+      <td>{{ p.tipo_tramite }}</td>
+      <td>{{ p.fecha_firma_contrato if p.fecha_firma_contrato else '-' }}</td>
+      <td>{{ p.plazo_limite }}</td>
+      <td>{{ p.estado }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5">Sin resultados</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

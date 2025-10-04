@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex align-items-center gap-3">
+    <img src="{{ url_for('static', filename='img/logo_cliente.png') }}" alt="MasterTerra Logo" class="rounded"
+      style="height:38px;">
+    <div>
+      <div class="fw-semibold">{{ cliente.nombre_razon_social }}</div>
+      <div class="text-muted small">Año {{ ano }} - Selecciona la institución</div>
+    </div>
+  </div>
+  <a href="{{ url_for('clientes.nuevo_cliente') }}" class="btn btn-masterterra">Agregar Cliente</a>
+</div>
+
+<div class="row g-3">
+  {% for i in instituciones %}
+  <div class="col-md-4">
+    <a class="text-decoration-none"
+      href="{{ url_for('clientes.institucion_detalle', id_cliente=cliente.id_cliente, ano=ano, inst=i.key) }}">
+      <div class="card institucion-card h-100">
+        <div class="card-body text-center">
+          <!-- Logo -->
+          <img src="{{ i.logo }}" class="mb-3" style="max-height:150px;" alt="{{ i.key }}">
+
+          <!-- Nombre corto -->
+          <h5 class="fw-bold">{{ i.key }}</h5>
+
+          <!-- Nombre completo -->
+          <p class="text-muted small">{{ i.full_name }}</p>
+          
+          <!-- Indicador de proyectos -->
+          {% if i.tiene_proyectos %}
+          <span class="badge bg-success">Tiene proyectos</span>
+          {% else %}
+          <span class="badge bg-secondary">Sin proyectos</span>
+          {% endif %}
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="mt-4">
+  <a href="{{ url_for('clientes.seleccionar_periodo', id_cliente=cliente.id_cliente) }}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Volver a Períodos
+  </a>
+</div>
+{% endblock %}

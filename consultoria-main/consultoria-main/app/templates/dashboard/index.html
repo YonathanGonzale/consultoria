@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-md-3">
+    <div class="card text-bg-primary"><div class="card-body">Clientes: <strong>{{ total_clientes }}</strong></div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-bg-success"><div class="card-body">Proyectos: <strong>{{ total_proyectos }}</strong></div></div>
+  </div>
+</div>
+
+<h5 class="mt-4">Próximos vencimientos</h5>
+<table class="table table-sm">
+  <thead><tr><th>Cliente</th><th>Tipo</th><th>Vence</th></tr></thead>
+  <tbody>
+    {% for v in proximos_venc %}
+      <tr>
+        <td>{{ v.cliente.nombre_razon_social if v.cliente else '-' }}</td>
+        <td>{{ v.tipo_documento }}</td>
+        <td>{{ v.fecha_vencimiento }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3">Sin datos</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
