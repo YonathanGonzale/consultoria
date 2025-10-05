@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template
 from flask_login import login_required
-from ..models import Cliente, Proyecto, Vencimiento
+from ..models import Cliente, Proyecto
 from ..extensions import db
+from datetime import date
 
 bp = Blueprint('dashboard', __name__)
 
@@ -9,6 +10,36 @@ bp = Blueprint('dashboard', __name__)
 @login_required
 def index():
     total_clientes = db.session.query(Cliente).count()
-    total_proyectos = db.session.query(Proyecto).count()
-    proximos_venc = db.session.query(Vencimiento).order_by(Vencimiento.fecha_vencimiento.asc()).limit(5).all()
-    return render_template('dashboard/index.html', total_clientes=total_clientes, total_proyectos=total_proyectos, proximos_venc=proximos_venc)
+    proximos_proyectos = (
+        db.session.query(Proyecto)
+        .filter(Proyecto.plazo_limite.isnot(None))
+        .order_by(Proyecto.plazo_limite.asc())
+        .limit(10)
+        .all()
+    )
+
+    hoy = date.today()
+    proximos_items = []
+    for proyecto in proximos_proyectos:
+        dias_restantes = (proyecto.plazo_limite - hoy).days
+        if dias_restantes <= 30:
+            badge_class = 'bg-danger'
+        elif dias_restantes <= 60:
+            badge_class = 'bg-warning text-dark'
+        elif dias_restantes <= 90:
+            badge_class = 'bg-success'
+        else:
+            badge_class = 'bg-secondary'
+
+        proximos_items.append({
+            'proyecto': proyecto,
+            'dias_restantes': dias_restantes,
+            'badge_class': badge_class,
+        })
+
+    return render_template(
+        'dashboard/index.html',
+        total_clientes=total_clientes,
+        proximos_items=proximos_items,
+    )
+

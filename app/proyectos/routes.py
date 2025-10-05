@@ -11,17 +11,35 @@ bp = Blueprint('proyectos', __name__)
 @bp.route('/')
 @login_required
 def index():
-    # listado simple placeholder
-    proyectos = Proyecto.query.order_by(Proyecto.id_proyecto.desc()).limit(50).all()
+    proyecto_id = request.args.get('proyecto_id', type=int)
+
+    query = Proyecto.query.order_by(Proyecto.id_proyecto.desc())
+    if proyecto_id:
+        query = query.filter(Proyecto.id_proyecto == proyecto_id)
+    else:
+        query = query.limit(50)
+
+    proyectos = query.all()
     return render_template('proyectos/list.html', proyectos=proyectos)
 
 @bp.route('/clientes/<int:id_cliente>/institucion/<string:inst>/proyectos')
 @login_required
 def board(id_cliente, inst):
     tipo_prefill = request.args.get('tipo')
+
     cliente = Cliente.query.get_or_404(id_cliente)
-    props = Propiedad.query.filter_by(id_cliente=id_cliente).order_by(Propiedad.finca.asc()).all()
-    proyectos = Proyecto.query.filter_by(id_cliente=id_cliente, institucion=inst).order_by(Proyecto.anho.desc(), Proyecto.id_proyecto.desc()).all()
+    props = (
+        Propiedad.query
+        .filter_by(id_cliente=id_cliente)
+        .order_by(Propiedad.finca.asc())
+        .all()
+    )
+    proyectos = (
+        Proyecto.query
+        .filter_by(id_cliente=id_cliente, institucion=inst)
+        .order_by(Proyecto.anho.desc(), Proyecto.id_proyecto.desc())
+        .all()
+    )
 
     estados = ['en proceso', 'entregado', 'finalizado', 'pendiente']
     cols = {e: [] for e in estados}
@@ -29,7 +47,14 @@ def board(id_cliente, inst):
         e = (p.estado or 'pendiente').lower()
         cols[e if e in cols else 'pendiente'].append(p)
 
-    return render_template('proyectos/board.html', cliente=cliente, institucion=inst, cols=cols, propiedades=props, tipo_prefill=tipo_prefill)
+    return render_template(
+        'proyectos/board.html',
+        cliente=cliente,
+        institucion=inst,
+        cols=cols,
+        propiedades=props,
+        tipo_prefill=tipo_prefill,
+    )
 
 @bp.route('/crear_quick', methods=['POST'])
 @login_required

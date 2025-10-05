@@ -2,26 +2,50 @@
 {% block content %}
 <div class="row g-3">
   <div class="col-md-3">
-    <div class="card text-bg-primary"><div class="card-body">Clientes: <strong>{{ total_clientes }}</strong></div></div>
-  </div>
-  <div class="col-md-3">
-    <div class="card text-bg-success"><div class="card-body">Proyectos: <strong>{{ total_proyectos }}</strong></div></div>
+    <div class="card text-bg-primary">
+      <div class="card-body">Clientes: <strong>{{ total_clientes }}</strong></div>
+    </div>
   </div>
 </div>
 
 <h5 class="mt-4">Próximos vencimientos</h5>
 <table class="table table-sm">
-  <thead><tr><th>Cliente</th><th>Tipo</th><th>Vence</th></tr></thead>
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Tipo</th>
+      <th>Subtipo</th>
+      <th>Vence</th>
+      <th>Días restantes</th>
+    </tr>
+  </thead>
   <tbody>
-    {% for v in proximos_venc %}
+    {% for item in proximos_items %}
+      {% set p = item.proyecto %}
       <tr>
-        <td>{{ v.cliente.nombre_razon_social if v.cliente else '-' }}</td>
-        <td>{{ v.tipo_documento }}</td>
-        <td>{{ v.fecha_vencimiento }}</td>
+        <td>
+          <a href="{{ url_for('proyectos.index', proyecto_id=p.id_proyecto) }}"
+             class="text-decoration-none">
+            {{ p.cliente.nombre_razon_social if p.cliente else '-' }}
+          </a>
+        </td>
+        <td>{{ p.institucion or '-' }}</td>
+        <td>{{ p.tipo_tramite or '-' }}</td>
+        <td>{{ p.plazo_limite.strftime('%d/%m/%Y') if p.plazo_limite else '-' }}</td>
+        <td>
+          <span class="badge {{ item.badge_class }}">
+            {% if item.dias_restantes < 0 %}
+              Vencido ({{ item.dias_restantes | abs }} días)
+            {% else %}
+              {{ item.dias_restantes }} días
+            {% endif %}
+          </span>
+        </td>
       </tr>
     {% else %}
-      <tr><td colspan="3">Sin datos</td></tr>
+      <tr><td colspan="5">Sin datos</td></tr>
     {% endfor %}
   </tbody>
 </table>
+
 {% endblock %}
