@@ -16,7 +16,9 @@
   {% for i in instituciones %}
   <div class="col-md-4">
     <a class="text-decoration-none"
-      href="{{ url_for('clientes.institucion_detalle', id_cliente=cliente.id_cliente, inst=i.key) }}">
+      href="{{ ano is defined and ano 
+                and url_for('clientes.institucion_detalle_por_ano', id_cliente=cliente.id_cliente, ano=ano, inst=i.key)
+                or url_for('clientes.institucion_detalle', id_cliente=cliente.id_cliente, inst=i.key) }}">
       <div class="card institucion-card h-100">
         <div class="card-body text-center">
           <!-- Logo -->

@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <div>
-    <h5 class="mb-0">{{ cliente.nombre_razon_social }} - {{ institucion }}</h5>
-    {% if tipo_prefill %}<div class="text-muted small">Tipo sugerido: {{ tipo_prefill }}</div>{% endif %}
+<div class="mb-3">
+  <h5 class="mb-0">{{ cliente.nombre_razon_social }} - {{ institucion }}</h5>
+  <div class="text-muted small">
+    Año {{ ano }}
+    {% if tipo_prefill %} - Tipo: {{ tipo_prefill }}{% endif %}
   </div>
-  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevo">Nuevo proyecto</button>
 </div>
 
 <div class="row g-3">

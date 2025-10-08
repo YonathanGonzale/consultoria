@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required
+from datetime import date
 from ..extensions import db
-from ..models import Cliente
+from ..models import Cliente, Proyecto
 
 bp = Blueprint('clientes', __name__)
 
@@ -92,3 +93,94 @@ def institucion_detalle(id_cliente, inst):
     }
 ]
     return render_template('clientes/institucion_detalle.html', cliente=cliente, institucion=inst, tipos=tipos)
+
+# Nuevas rutas basadas en consultoria-main
+@bp.route('/<int:id_cliente>/periodos')
+@login_required
+def seleccionar_periodo(id_cliente):
+    cliente = Cliente.query.get_or_404(id_cliente)
+
+    anos_disponibles = db.session.query(Proyecto.anho).filter_by(id_cliente=id_cliente).distinct().order_by(Proyecto.anho.desc()).all()
+    anos = [ano[0] for ano in anos_disponibles if ano[0]]
+    if not anos:
+        ano_actual = date.today().year
+        anos = [ano_actual, ano_actual - 1, ano_actual - 2]
+
+    return render_template('clientes/periodos.html', cliente=cliente, anos=anos)
+
+
+@bp.route('/<int:id_cliente>/ano/<int:ano>/instituciones')
+@login_required
+def instituciones_por_ano(id_cliente, ano):
+    cliente = Cliente.query.get_or_404(id_cliente)
+
+    instituciones_con_proyectos = db.session.query(Proyecto.institucion).filter_by(
+        id_cliente=id_cliente, anho=ano
+    ).distinct().all()
+    instituciones_activas = [inst[0] for inst in instituciones_con_proyectos if inst[0]]
+
+    todas_instituciones = [
+        {
+            "key": "MADES",
+            "full_name": "Ministerio del Ambiente y Desarrollo Sostenible",
+            "logo": url_for('static', filename='img/logo_mades.png')
+        },
+        {
+            "key": "SENAVE",
+            "full_name": "Servicio Nacional de Calidad y Sanidad Vegetal y de Semillas",
+            "logo": url_for('static', filename='img/logo_senave.png')
+        },
+        {
+            "key": "INFONA",
+            "full_name": "Instituto Forestal Nacional",
+            "logo": url_for('static', filename='img/logo_infona.png')
+        },
+    ]
+
+    for inst in todas_instituciones:
+        inst['tiene_proyectos'] = inst['key'] in instituciones_activas
+
+    return render_template('clientes/instituciones.html', cliente=cliente, instituciones=todas_instituciones, ano=ano)
+
+
+@bp.route('/<int:id_cliente>/ano/<int:ano>/institucion/<string:inst>')
+@login_required
+def institucion_detalle_por_ano(id_cliente, ano, inst):
+    cliente = Cliente.query.get_or_404(id_cliente)
+
+    tipos_con_proyectos = db.session.query(Proyecto.tipo_tramite).filter_by(
+        id_cliente=id_cliente, anho=ano, institucion=inst
+    ).distinct().all()
+    tipos_activos = [tipo[0] for tipo in tipos_con_proyectos if tipo[0]]
+
+    todos_tipos = [
+        {
+            "name": "EIA y EDE",
+            "desc": "Evaluación de Impacto Ambiental y Estudio de disposición de Efluentes",
+            "color": "success",
+            "icon": "bi-tree-fill"
+        },
+        {
+            "name": "AUDITORIAS",
+            "desc": "Auditorías ambientales",
+            "color": "danger",
+            "icon": "bi-clipboard-check-fill"
+        },
+        {
+            "name": "PGAG",
+            "desc": "Plan de Gestión Ambiental Genérico",
+            "color": "warning",
+            "icon": "bi-people-fill"
+        },
+        {
+            "name": "NO REQUIERE",
+            "desc": "Nota de consulta",
+            "color": "primary",
+            "icon": "bi-x-circle-fill"
+        }
+    ]
+
+    for tipo in todos_tipos:
+        tipo['tiene_proyectos'] = tipo['name'] in tipos_activos
+
+    return render_template('clientes/institucion_detalle.html', cliente=cliente, institucion=inst, tipos=todos_tipos, ano=ano)

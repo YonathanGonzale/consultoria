@@ -22,24 +22,84 @@ def index():
     proyectos = query.all()
     return render_template('proyectos/list.html', proyectos=proyectos)
 
+@bp.route('/nuevo', methods=['GET', 'POST'])
+@login_required
+def nuevo():
+    if request.method == 'POST':
+        # Procesar creación del proyecto (similar a crear_quick)
+        id_cliente = int(request.form['id_cliente'])
+        institucion = request.form['institucion']
+        anho = int(request.form.get('anho') or date.today().year)
+        tipo_tramite = request.form.get('tipo_tramite')
+        estado = request.form.get('estado') or 'pendiente'
+        id_propiedad = request.form.get('id_propiedad') or None
+        fecha_firma = request.form.get('fecha_firma_contrato') or None
+        plazo_limite = request.form.get('plazo_limite') or None
+
+        p = Proyecto(
+            id_cliente=id_cliente,
+            institucion=institucion,
+            anho=anho,
+            tipo_tramite=tipo_tramite,
+            estado=estado,
+            id_propiedad=id_propiedad,
+            fecha_firma_contrato=fecha_firma,
+            plazo_limite=plazo_limite,
+        )
+        db.session.add(p)
+        db.session.commit()
+
+        # Manejo de archivo anexo opcional
+        file = request.files.get('anexo')
+        if file and file.filename:
+            allowed = {'.jpg', '.jpeg', '.png', '.gif', '.pdf', '.webp'}
+            ext = os.path.splitext(file.filename)[1].lower()
+            if ext in allowed:
+                filename = secure_filename(f"proyecto_{p.id_proyecto}_{file.filename}")
+                base_upload = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+                target_dir = os.path.join(base_upload, 'proyectos')
+                os.makedirs(target_dir, exist_ok=True)
+                save_path = os.path.join(target_dir, filename)
+                file.save(save_path)
+
+                doc = DocumentoProyecto(
+                    id_proyecto=p.id_proyecto,
+                    tipo='anexo',
+                    archivo_url=save_path
+                )
+                db.session.add(doc)
+                db.session.commit()
+
+        flash('Proyecto creado exitosamente', 'success')
+        return redirect(url_for('proyectos.index'))
+
+    # GET - Mostrar formulario
+    clientes = Cliente.query.order_by(Cliente.nombre_razon_social.asc()).all()
+    return render_template('proyectos/new.html', clientes=clientes, anho_actual=date.today().year)
+
 @bp.route('/clientes/<int:id_cliente>/institucion/<string:inst>/proyectos')
 @login_required
-def board(id_cliente, inst):
-    tipo_prefill = request.args.get('tipo')
+def board_legacy(id_cliente, inst):
+    # Redirige a la selección de período (compatibilidad con enlaces antiguos)
+    return redirect(url_for('clientes.seleccionar_periodo', id_cliente=id_cliente))
 
+
+# Nuevo board con año en la URL
+@bp.route('/clientes/<int:id_cliente>/ano/<int:ano>/institucion/<string:inst>/proyectos')
+@login_required
+def board(id_cliente, ano, inst):
+    tipo_prefill = request.args.get('tipo')
     cliente = Cliente.query.get_or_404(id_cliente)
-    props = (
-        Propiedad.query
-        .filter_by(id_cliente=id_cliente)
-        .order_by(Propiedad.finca.asc())
-        .all()
-    )
-    proyectos = (
-        Proyecto.query
-        .filter_by(id_cliente=id_cliente, institucion=inst)
-        .order_by(Proyecto.anho.desc(), Proyecto.id_proyecto.desc())
-        .all()
-    )
+    props = Propiedad.query.filter_by(id_cliente=id_cliente).order_by(Propiedad.finca.asc()).all()
+
+    query = Proyecto.query.filter_by(id_cliente=id_cliente, anho=ano, institucion=inst)
+    if tipo_prefill:
+        query = query.filter(Proyecto.tipo_tramite.ilike(f'%{tipo_prefill}%'))
+    proyectos = query.order_by(Proyecto.id_proyecto.desc()).all()
+
+    if not proyectos and tipo_prefill:
+        query = Proyecto.query.filter_by(id_cliente=id_cliente, anho=ano, institucion=inst)
+        proyectos = query.order_by(Proyecto.id_proyecto.desc()).all()
 
     estados = ['en proceso', 'entregado', 'finalizado', 'pendiente']
     cols = {e: [] for e in estados}
@@ -47,14 +107,13 @@ def board(id_cliente, inst):
         e = (p.estado or 'pendiente').lower()
         cols[e if e in cols else 'pendiente'].append(p)
 
-    return render_template(
-        'proyectos/board.html',
-        cliente=cliente,
-        institucion=inst,
-        cols=cols,
-        propiedades=props,
-        tipo_prefill=tipo_prefill,
-    )
+    return render_template('proyectos/board.html', 
+                         cliente=cliente, 
+                         institucion=inst, 
+                         ano=ano,
+                         cols=cols, 
+                         propiedades=props, 
+                         tipo_prefill=tipo_prefill)
 
 @bp.route('/crear_quick', methods=['POST'])
 @login_required
@@ -103,7 +162,7 @@ def crear_quick():
             db.session.add(doc)
             db.session.commit()
     flash('Proyecto creado', 'success')
-    return redirect(url_for('proyectos.board', id_cliente=id_cliente, inst=institucion))
+    return redirect(url_for('proyectos.board', id_cliente=id_cliente, ano=anho, inst=institucion))
 
 @bp.route('/<int:id_proyecto>/estado', methods=['POST'])
 @login_required
@@ -152,8 +211,22 @@ def editar(id_proyecto):
                 db.session.add(doc)
                 db.session.commit()
         flash('Proyecto actualizado', 'success')
-        return redirect(url_for('proyectos.board', id_cliente=p.id_cliente, inst=p.institucion))
+        return redirect(url_for('proyectos.board', id_cliente=p.id_cliente, ano=p.anho, inst=p.institucion))
     return render_template('proyectos/edit.html', p=p, propiedades=props)
+
+# API: propiedades por cliente
+@bp.route('/api/cliente/<int:id_cliente>/propiedades')
+@login_required
+def get_propiedades_cliente(id_cliente):
+    propiedades = Propiedad.query.filter_by(id_cliente=id_cliente).order_by(Propiedad.finca.asc()).all()
+    return jsonify([
+        {
+            'id_propiedad': p.id_propiedad,
+            'finca': p.finca,
+            'padron': p.padron,
+            'matricula': p.matricula,
+        } for p in propiedades
+    ])
 
 @bp.route('/doc/<int:id_doc>/eliminar', methods=['POST'])
 @login_required
@@ -170,6 +243,40 @@ def eliminar_doc(id_doc):
     db.session.commit()
     flash('Documento eliminado', 'success')
     return redirect(url_for('proyectos.editar', id_proyecto=proyecto.id_proyecto))
+
+# Eliminar proyecto con borrado en cascada y archivos
+@bp.route('/<int:id_proyecto>/eliminar', methods=['POST'])
+@login_required
+def eliminar_proyecto(id_proyecto):
+    proyecto = Proyecto.query.get_or_404(id_proyecto)
+    try:
+        # Eliminar documentos asociados (y archivos físicos si existen)
+        documentos = DocumentoProyecto.query.filter_by(id_proyecto=id_proyecto).all()
+        for doc in documentos:
+            try:
+                if doc.archivo_url and os.path.exists(doc.archivo_url):
+                    os.remove(doc.archivo_url)
+            except Exception:
+                pass
+            db.session.delete(doc)
+
+        # Eliminar pagos asociados
+        for pago in proyecto.pagos:
+            db.session.delete(pago)
+
+        # Eliminar facturas asociadas
+        for factura in proyecto.facturas:
+            db.session.delete(factura)
+
+        # Eliminar el proyecto
+        db.session.delete(proyecto)
+        db.session.commit()
+        flash('Proyecto eliminado exitosamente', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al eliminar el proyecto: {str(e)}', 'error')
+
+    return redirect(url_for('proyectos.index'))
 
 @bp.route('/doc/<int:id_doc>/descargar', methods=['GET'])
 @login_required
