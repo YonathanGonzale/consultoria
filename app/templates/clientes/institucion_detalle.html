@@ -3,25 +3,112 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div class="d-flex align-items-center gap-3">
     <img src="{{ url_for('static', filename='img/logo_cliente.png') }}" 
-         alt="MasterTerra Logo" class="rounded" style="height:38px;">
+         alt="Cliente Logo" class="rounded" style="height:38px;">
     <div>
       <div class="fw-semibold">{{ cliente.nombre_razon_social }} - {{ institucion }}</div>
-      <div class="text-muted small">Selecciona el tipo de trámite</div>
+      <div class="text-muted small">
+        {% if ano %}
+          Selecciona el tipo de trámite - Período {{ ano }}
+        {% else %}
+          Selecciona el tipo de trámite
+        {% endif %}
+      </div>
     </div>
   </div>
-  <a href="{{ url_for('clientes.nuevo_cliente') }}" class="btn btn-masterterra">Agregar Cliente</a>
+  <div>
+    {% if ano %}
+    <a href="{{ url_for('clientes.instituciones_por_ano', id_cliente=cliente.id_cliente, ano=ano) }}" class="btn btn-outline-secondary me-2">Cambiar Institución</a>
+    {% endif %}
+    <a href="{{ url_for('clientes.nuevo_cliente') }}" class="btn btn-primary">Agregar Cliente</a>
+  </div>
 </div>
 
 <div class="row g-3">
   {% for t in tipos %}
   <div class="col-md-3">
-    <a class="btn btn-{{ t.color }} tramite-card" 
-       href="{{ url_for('proyectos.board', id_cliente=cliente.id_cliente, inst=institucion, tipo=t.name) }}">
-      <div class="tramite-icon"><i class="bi {{ t.icon }}"></i></div>
+    <a class="btn btn-{{ t.color }} tramite-card text-decoration-none position-relative
+       {% if t.get('tiene_proyectos') %}border-white border-3 shadow-lg{% endif %}" 
+       href="{{ url_for('proyectos.board', id_cliente=cliente.id_cliente, ano=ano if ano else 2024, inst=institucion, tipo=t.name) }}">
+      
+      {% if t.get('tiene_proyectos') %}
+      <div class="position-absolute top-0 end-0 p-1">
+        <span class="badge bg-white text-dark">
+          <i class="bi bi-check-circle-fill text-success"></i>
+        </span>
+      </div>
+      {% endif %}
+      
+      <div class="tramite-icon">
+        <i class="bi {{ t.icon }}"></i>
+        {% if t.get('tiene_proyectos') %}
+        <i class="bi bi-star-fill text-warning position-absolute" style="top: 5px; right: 25px; font-size: 0.8rem;"></i>
+        {% endif %}
+      </div>
       <div class="tramite-title">{{ t.name }}</div>
       <div class="tramite-desc">{{ t.desc }}</div>
+      
+      {% if t.get('tiene_proyectos') %}
+      <small class="d-block mt-2 fw-bold opacity-75">
+        <i class="bi bi-folder-fill"></i> Con proyectos
+      </small>
+      {% else %}
+      <small class="d-block mt-2 opacity-50">
+        <i class="bi bi-folder"></i> Sin proyectos
+      </small>
+      {% endif %}
     </a>
   </div>
   {% endfor %}
 </div>
+
+<div class="mt-4">
+  {% if ano %}
+  <a href="{{ url_for('clientes.instituciones_por_ano', id_cliente=cliente.id_cliente, ano=ano) }}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Volver a Instituciones
+  </a>
+  {% else %}
+  <a href="{{ url_for('clientes.instituciones', id_cliente=cliente.id_cliente) }}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Volver a Instituciones
+  </a>
+  {% endif %}
+</div>
+
+<style>
+.tramite-card {
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  position: relative;
+}
+
+.tramite-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.tramite-icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.tramite-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.tramite-desc {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.border-3 {
+  border-width: 3px !important;
+}
+</style>
 {% endblock %}

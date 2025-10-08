@@ -50,14 +50,19 @@ def instituciones(id_cliente):
         "logo": url_for('static', filename='img/logo_mades.png')
     },
     {
+        "key": "INFONA",
+        "full_name": "Instituto Forestal Nacional",
+        "logo": url_for('static', filename='img/logo_infona.png')
+    },
+    {
         "key": "SENAVE",
         "full_name": "Servicio Nacional de Calidad y Sanidad Vegetal y de Semillas",
         "logo": url_for('static', filename='img/logo_senave.png')
     },
     {
-        "key": "INFONA",
-        "full_name": "Instituto Forestal Nacional",
-        "logo": url_for('static', filename='img/logo_infona.png')
+        "key": "Otros",
+        "full_name": "Otras Instituciones",
+        "logo": url_for('static', filename='img/logo_cliente.png')
     },
     ]
     return render_template('clientes/instituciones.html', cliente=cliente, instituciones=instituciones)
@@ -68,28 +73,34 @@ def institucion_detalle(id_cliente, inst):
     cliente = Cliente.query.get_or_404(id_cliente)
     tipos = [
     {
-        "name": "EIA y EDE",
-        "desc": "Evaluación de Impacto Ambiental y Estudio de disposición de Efluentes",
+        "name": "EIA",
+        "desc": "Evaluación de Impacto Ambiental",
         "color": "success",
         "icon": "bi-tree-fill"
     },
     {
-        "name": "AUDITORIAS",
+        "name": "Auditoría",
         "desc": "Auditorías ambientales",
         "color": "danger",
         "icon": "bi-clipboard-check-fill"
     },
     {
-        "name": "PGAG",
-        "desc": "Plan de Gestión Ambiental Genérico",
+        "name": "Informe técnico",
+        "desc": "Informes técnicos especializados",
         "color": "warning",
-        "icon": "bi-people-fill"
+        "icon": "bi-file-text-fill"
     },
     {
-        "name": "NO REQUIERE",
-        "desc": "Nota de consulta",
-        "color": "primary",
-        "icon": "bi-x-circle-fill"
+        "name": "Registro de silo",
+        "desc": "Registro y habilitación de silos",
+        "color": "info",
+        "icon": "bi-building-fill"
+    },
+    {
+        "name": "Otros",
+        "desc": "Otros tipos de trámites",
+        "color": "secondary",
+        "icon": "bi-three-dots"
     }
 ]
     return render_template('clientes/institucion_detalle.html', cliente=cliente, institucion=inst, tipos=tipos)
@@ -126,14 +137,19 @@ def instituciones_por_ano(id_cliente, ano):
             "logo": url_for('static', filename='img/logo_mades.png')
         },
         {
+            "key": "INFONA",
+            "full_name": "Instituto Forestal Nacional",
+            "logo": url_for('static', filename='img/logo_infona.png')
+        },
+        {
             "key": "SENAVE",
             "full_name": "Servicio Nacional de Calidad y Sanidad Vegetal y de Semillas",
             "logo": url_for('static', filename='img/logo_senave.png')
         },
         {
-            "key": "INFONA",
-            "full_name": "Instituto Forestal Nacional",
-            "logo": url_for('static', filename='img/logo_infona.png')
+            "key": "Otros",
+            "full_name": "Otras Instituciones",
+            "logo": url_for('static', filename='img/logo_cliente.png')
         },
     ]
 
@@ -155,28 +171,34 @@ def institucion_detalle_por_ano(id_cliente, ano, inst):
 
     todos_tipos = [
         {
-            "name": "EIA y EDE",
-            "desc": "Evaluación de Impacto Ambiental y Estudio de disposición de Efluentes",
+            "name": "EIA",
+            "desc": "Evaluación de Impacto Ambiental",
             "color": "success",
             "icon": "bi-tree-fill"
         },
         {
-            "name": "AUDITORIAS",
+            "name": "Auditoría",
             "desc": "Auditorías ambientales",
             "color": "danger",
             "icon": "bi-clipboard-check-fill"
         },
         {
-            "name": "PGAG",
-            "desc": "Plan de Gestión Ambiental Genérico",
+            "name": "Informe técnico",
+            "desc": "Informes técnicos especializados",
             "color": "warning",
-            "icon": "bi-people-fill"
+            "icon": "bi-file-text-fill"
         },
         {
-            "name": "NO REQUIERE",
-            "desc": "Nota de consulta",
-            "color": "primary",
-            "icon": "bi-x-circle-fill"
+            "name": "Registro de silo",
+            "desc": "Registro y habilitación de silos",
+            "color": "info",
+            "icon": "bi-building-fill"
+        },
+        {
+            "name": "Otros",
+            "desc": "Otros tipos de trámites",
+            "color": "secondary",
+            "icon": "bi-three-dots"
         }
     ]
 

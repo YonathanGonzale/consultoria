@@ -1,50 +1,187 @@
 {% extends 'base.html' %}
 {% block content %}
-<h4>Editar Proyecto #{{ p.id_proyecto }}</h4>
-<form method="post" enctype="multipart/form-data">
-  <div class="row g-3">
-    <div class="col-md-2">
-      <label class="form-label">Año</label>
-      <input type="number" name="anho" class="form-control" value="{{ p.anho }}">
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Tipo de trámite</label>
-      <input name="tipo_tramite" class="form-control" value="{{ p.tipo_tramite }}">
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Estado</label>
-      <select name="estado" class="form-select">
-        {% for e in ['pendiente','en proceso','entregado','finalizado'] %}
-        <option value="{{ e }}" {% if p.estado==e %}selected{% endif %}>{{ e }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Propiedad</label>
-      <select name="id_propiedad" class="form-select">
-        <option value="">Sin propiedad</option>
-        {% for pr in propiedades %}
-        <option value="{{ pr.id_propiedad }}" {% if p.id_propiedad==pr.id_propiedad %}selected{% endif %}>{{ pr.finca }} - {{ pr.departamento }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Firma de contrato</label>
-      <input type="date" name="fecha_firma_contrato" class="form-control" value="{{ p.fecha_firma_contrato }}">
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Plazo límite</label>
-      <input type="date" name="plazo_limite" class="form-control" value="{{ p.plazo_limite }}">
-    </div>
+<div class="row">
+  <div class="col-md-8">
+    <h4>Editar Proyecto #{{ p.id_proyecto }}</h4>
+    
+    <form method="POST" enctype="multipart/form-data">
+      <div class="row g-3">
+        <!-- Cliente -->
+        <div class="col-md-6">
+          <label class="form-label">Cliente *</label>
+          <select name="id_cliente" id="id_cliente" class="form-select" required>
+            <option value="">Seleccionar cliente...</option>
+            {% for cliente in clientes %}
+            <option value="{{ cliente.id_cliente }}" {% if p.id_cliente==cliente.id_cliente %}selected{% endif %}>{{ cliente.nombre_razon_social }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Institución -->
+        <div class="col-md-6">
+          <label class="form-label">Institución *</label>
+          <select name="institucion" class="form-select" required>
+            <option value="">Seleccionar institución...</option>
+            <option value="MADES" {% if p.institucion=='MADES' %}selected{% endif %}>MADES</option>
+            <option value="INFONA" {% if p.institucion=='INFONA' %}selected{% endif %}>INFONA</option>
+            <option value="SENAVE" {% if p.institucion=='SENAVE' %}selected{% endif %}>SENAVE</option>
+            <option value="Otros" {% if p.institucion=='Otros' %}selected{% endif %}>Otros</option>
+          </select>
+        </div>
+
+        <!-- Año -->
+        <div class="col-md-4">
+          <label class="form-label">Año</label>
+          <input type="number" name="anho" class="form-control" value="{{ p.anho }}" min="2020" max="2035">
+        </div>
+
+        <!-- Tipo de Trámite -->
+        <div class="col-md-8">
+          <label class="form-label">Tipo de Trámite *</label>
+          <select name="tipo_tramite" class="form-select" required>
+            <option value="">Seleccionar tipo...</option>
+            <option value="EIA" {% if p.tipo_tramite=='EIA' %}selected{% endif %}>EIA</option>
+            <option value="Auditoría" {% if p.tipo_tramite=='Auditoría' %}selected{% endif %}>Auditoría</option>
+            <option value="Informe técnico" {% if p.tipo_tramite=='Informe técnico' %}selected{% endif %}>Informe técnico</option>
+            <option value="Registro de silo" {% if p.tipo_tramite=='Registro de silo' %}selected{% endif %}>Registro de silo</option>
+            <option value="Otros" {% if p.tipo_tramite=='Otros' %}selected{% endif %}>Otros</option>
+          </select>
+        </div>
+
+        <!-- Estado -->
+        <div class="col-md-6">
+          <label class="form-label">Estado</label>
+          <select name="estado" class="form-select">
+            <option value="pendiente" {% if p.estado=='pendiente' %}selected{% endif %}>Pendiente</option>
+            <option value="en proceso" {% if p.estado=='en proceso' %}selected{% endif %}>En Proceso</option>
+            <option value="entregado" {% if p.estado=='entregado' %}selected{% endif %}>Entregado</option>
+            <option value="finalizado" {% if p.estado=='finalizado' %}selected{% endif %}>Finalizado</option>
+          </select>
+        </div>
+
+        <!-- Propiedad -->
+        <div class="col-md-6">
+          <label class="form-label">Propiedad (Opcional)</label>
+          <select name="id_propiedad" id="id_propiedad" class="form-select">
+            <option value="">Seleccionar propiedad...</option>
+            {% for pr in propiedades %}
+            <option value="{{ pr.id_propiedad }}" {% if p.id_propiedad==pr.id_propiedad %}selected{% endif %}>{{ pr.finca }} - Padrón: {{ pr.padron or 'N/A' }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Fecha Firma Contrato -->
+        <div class="col-md-6">
+          <label class="form-label">Fecha Firma Contrato</label>
+          <input type="date" name="fecha_firma_contrato" class="form-control" value="{{ p.fecha_firma_contrato }}">
+        </div>
+
+        <!-- Plazo Límite -->
+        <div class="col-md-6">
+          <label class="form-label">Plazo Límite</label>
+          <input type="date" name="plazo_limite" class="form-control" value="{{ p.plazo_limite }}">
+        </div>
+
+        <!-- Documentos Existentes -->
+        <div class="col-12">
+          <label class="form-label">Documentos Anexos Existentes</label>
+          {% if documentos %}
+          <div class="row g-3">
+            {% for doc in documentos %}
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-body p-3">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="flex-grow-1">
+                      <span class="badge bg-secondary mb-1">{{ doc.tipo }}</span>
+                    </div>
+                    <div class="ms-2">
+                      <a href="{{ url_for('proyectos.descargar_doc', id_doc=doc.id_documento) }}" class="btn btn-sm btn-outline-primary me-1" title="Descargar">
+                        <i class="bi bi-download"></i>
+                      </a>
+                      <form method="POST" action="{{ url_for('proyectos.eliminar_doc', id_doc=doc.id_documento) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este documento?')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                  
+                  {% set filename = doc.archivo_url.split('\\')[-1].split('/')[-1] if doc.archivo_url else '' %}
+                  {% set ext = filename.split('.')[-1].lower() if '.' in filename else '' %}
+                  
+                  {% if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                  <div class="text-center">
+                    <img src="{{ url_for('proyectos.ver_doc', id_doc=doc.id_documento) }}" 
+                         class="img-thumbnail" 
+                         style="max-height: 150px; max-width: 100%;" 
+                         alt="Vista previa">
+                  </div>
+                  {% elif ext == 'pdf' %}
+                  <div class="text-center text-muted">
+                    <i class="bi bi-file-earmark-pdf" style="font-size: 3rem;"></i>
+                    <div>Documento PDF</div>
+                  </div>
+                  {% else %}
+                  <div class="text-center text-muted">
+                    <i class="bi bi-file-earmark" style="font-size: 3rem;"></i>
+                    <div>Archivo</div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay documentos anexos cargados para este proyecto.
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Agregar Nuevo Archivo Anexo -->
+        <div class="col-12">
+          <label class="form-label">Agregar Nuevo Archivo Anexo (Opcional)</label>
+          <input type="file" name="anexo" class="form-control" accept=".jpg,.jpeg,.png,.gif,.pdf,.webp">
+          <small class="form-text text-muted">Formatos permitidos: JPG, PNG, GIF, PDF, WEBP</small>
+        </div>
+
+        <!-- Botones -->
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+          <a href="{{ url_for('proyectos.board', id_cliente=p.id_cliente, ano=p.anho, inst=p.institucion) }}" class="btn btn-secondary ms-2">Volver al Board</a>
+        </div>
+      </div>
+    </form>
   </div>
-  <div class="mt-3">
-    <div class="mb-3">
-      <label class="form-label">Agregar documentación anexa</label>
-      <input type="file" class="form-control" name="anexo" accept=".jpg,.jpeg,.png,.gif,.pdf,.webp,image/*">
-      <div class="form-text">Podés adjuntar imágenes o PDF (contrato, notas firmadas, mapas, etc.).</div>
-    </div>
-    <button class="btn btn-primary">Guardar</button>
-    <a href="{{ url_for('proyectos.board', id_cliente=p.id_cliente, inst=p.institucion) }}" class="btn btn-secondary">Volver</a>
-  </div>
-</form>
+</div>
+
+<script>
+// Cargar propiedades por cliente usando la API
+document.addEventListener('DOMContentLoaded', function() {
+    const clienteSelect = document.getElementById('id_cliente');
+    const propiedadSelect = document.getElementById('id_propiedad');
+    
+    clienteSelect.addEventListener('change', function() {
+        const clienteId = this.value;
+        propiedadSelect.innerHTML = '<option value="">Seleccionar propiedad...</option>';
+        if (clienteId) {
+            fetch(`/proyectos/api/cliente/${clienteId}/propiedades`)
+                .then(response => response.json())
+                .then(propiedades => {
+                    propiedades.forEach(prop => {
+                        const option = document.createElement('option');
+                        option.value = prop.id_propiedad;
+                        option.textContent = `${prop.finca} - Padrón: ${prop.padron || 'N/A'}`;
+                        propiedadSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error cargando propiedades:', error);
+                });
+        }
+    });
+});
+</script>
 {% endblock %}

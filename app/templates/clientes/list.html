@@ -22,7 +22,7 @@
     {% for c in clientes %}
     <tr>
       <td>
-        <a href="{{ url_for('clientes.instituciones', id_cliente=c.id_cliente) }}">
+        <a href="{{ url_for('clientes.seleccionar_periodo', id_cliente=c.id_cliente) }}">
           {{ c.nombre_razon_social }}
         </a>
       </td>

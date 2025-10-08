@@ -2,14 +2,25 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div class="d-flex align-items-center gap-3">
-    <img src="{{ url_for('static', filename='img/logo_cliente.png') }}" alt="MasterTerra Logo" class="rounded"
+    <img src="{{ url_for('static', filename='img/logo_cliente.png') }}" alt="Cliente Logo" class="rounded"
       style="height:38px;">
     <div>
       <div class="fw-semibold">{{ cliente.nombre_razon_social }}</div>
-      <div class="text-muted small">Selecciona la institución</div>
+      <div class="text-muted small">
+        {% if ano %}
+          Selecciona la institución - Período {{ ano }}
+        {% else %}
+          Selecciona la institución
+        {% endif %}
+      </div>
     </div>
   </div>
-  <a href="{{ url_for('clientes.nuevo_cliente') }}" class="btn btn-masterterra">Agregar Cliente</a>
+  <div>
+    {% if ano %}
+    <a href="{{ url_for('clientes.seleccionar_periodo', id_cliente=cliente.id_cliente) }}" class="btn btn-outline-secondary me-2">Cambiar Período</a>
+    {% endif %}
+    <a href="{{ url_for('clientes.nuevo_cliente') }}" class="btn btn-primary">Agregar Cliente</a>
+  </div>
 </div>
 
 <div class="row g-3">
@@ -19,20 +30,61 @@
       href="{{ ano is defined and ano 
                 and url_for('clientes.institucion_detalle_por_ano', id_cliente=cliente.id_cliente, ano=ano, inst=i.key)
                 or url_for('clientes.institucion_detalle', id_cliente=cliente.id_cliente, inst=i.key) }}">
-      <div class="card institucion-card h-100">
+      <div class="card institucion-card h-100 {% if i.get('tiene_proyectos') %}border-success shadow-sm{% endif %}">
         <div class="card-body text-center">
+          {% if i.get('tiene_proyectos') %}
+          <div class="position-absolute top-0 end-0 p-2">
+            <span class="badge bg-success">
+              <i class="bi bi-check-circle"></i> Con proyectos
+            </span>
+          </div>
+          {% endif %}
+          
           <!-- Logo -->
-          <img src="{{ i.logo }}" class="mb-3" style="max-height:150px;" alt="{{ i.key }}">
+          <img src="{{ i.logo }}" class="mb-3" style="max-height:120px;" alt="{{ i.key }}">
 
           <!-- Nombre corto -->
-          <h5 class="fw-bold">{{ i.key }}</h5>
+          <h5 class="fw-bold {% if i.get('tiene_proyectos') %}text-success{% endif %}">{{ i.key }}</h5>
 
           <!-- Nombre completo -->
           <p class="text-muted small">{{ i.full_name }}</p>
+          
+          {% if i.get('tiene_proyectos') %}
+          <small class="text-success fw-semibold">
+            <i class="bi bi-folder-fill"></i> Tiene proyectos en {{ ano }}
+          </small>
+          {% else %}
+          <small class="text-muted">
+            <i class="bi bi-folder"></i> Sin proyectos en {{ ano }}
+          </small>
+          {% endif %}
         </div>
       </div>
     </a>
   </div>
   {% endfor %}
 </div>
+
+<div class="mt-4">
+  <a href="{{ url_for('clientes.seleccionar_periodo', id_cliente=cliente.id_cliente) }}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Volver a Períodos
+  </a>
+</div>
+
+<style>
+.institucion-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  position: relative;
+}
+
+.institucion-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.border-success {
+  border-color: #198754 !important;
+  border-width: 2px !important;
+}
+</style>
 {% endblock %}

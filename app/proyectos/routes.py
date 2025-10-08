@@ -57,6 +57,9 @@ def nuevo():
             if ext in allowed:
                 filename = secure_filename(f"proyecto_{p.id_proyecto}_{file.filename}")
                 base_upload = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+                # Asegurar ruta absoluta
+                if not os.path.isabs(base_upload):
+                    base_upload = os.path.join(current_app.root_path, base_upload)
                 target_dir = os.path.join(base_upload, 'proyectos')
                 os.makedirs(target_dir, exist_ok=True)
                 save_path = os.path.join(target_dir, filename)
@@ -181,7 +184,10 @@ def update_estado(id_proyecto):
 def editar(id_proyecto):
     p = Proyecto.query.get_or_404(id_proyecto)
     props = Propiedad.query.filter_by(id_cliente=p.id_cliente).order_by(Propiedad.finca.asc()).all()
+    clientes = Cliente.query.order_by(Cliente.nombre_razon_social.asc()).all()
     if request.method == 'POST':
+        p.id_cliente = int(request.form.get('id_cliente') or p.id_cliente)
+        p.institucion = request.form.get('institucion') or p.institucion
         p.anho = int(request.form.get('anho') or p.anho or date.today().year)
         p.tipo_tramite = request.form.get('tipo_tramite')
         p.estado = request.form.get('estado') or p.estado
@@ -198,6 +204,9 @@ def editar(id_proyecto):
             if ext in allowed:
                 filename = secure_filename(f"proyecto_{p.id_proyecto}_{file.filename}")
                 base_upload = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+                # Asegurar ruta absoluta
+                if not os.path.isabs(base_upload):
+                    base_upload = os.path.join(current_app.root_path, base_upload)
                 target_dir = os.path.join(base_upload, 'proyectos')
                 os.makedirs(target_dir, exist_ok=True)
                 save_path = os.path.join(target_dir, filename)
@@ -211,8 +220,9 @@ def editar(id_proyecto):
                 db.session.add(doc)
                 db.session.commit()
         flash('Proyecto actualizado', 'success')
-        return redirect(url_for('proyectos.board', id_cliente=p.id_cliente, ano=p.anho, inst=p.institucion))
-    return render_template('proyectos/edit.html', p=p, propiedades=props)
+        return redirect(url_for('proyectos.editar', id_proyecto=p.id_proyecto))
+    documentos = DocumentoProyecto.query.filter_by(id_proyecto=id_proyecto).all()
+    return render_template('proyectos/edit.html', p=p, propiedades=props, clientes=clientes, documentos=documentos)
 
 # API: propiedades por cliente
 @bp.route('/api/cliente/<int:id_cliente>/propiedades')
@@ -241,7 +251,7 @@ def eliminar_doc(id_doc):
         pass
     db.session.delete(doc)
     db.session.commit()
-    flash('Documento eliminado', 'success')
+    flash('Documento eliminado correctamente', 'success')
     return redirect(url_for('proyectos.editar', id_proyecto=proyecto.id_proyecto))
 
 # Eliminar proyecto con borrado en cascada y archivos
@@ -278,11 +288,57 @@ def eliminar_proyecto(id_proyecto):
 
     return redirect(url_for('proyectos.index'))
 
+@bp.route('/doc/<int:id_doc>/ver', methods=['GET'])
+@login_required
+def ver_doc(id_doc):
+    doc = DocumentoProyecto.query.get_or_404(id_doc)
+    if not doc.archivo_url:
+        flash('No se encontró la URL del archivo', 'error')
+        abort(404)
+    
+    # Intentar corregir la ruta si es relativa o incorrecta
+    archivo_path = doc.archivo_url
+    if not os.path.exists(archivo_path):
+        # Intentar con ruta absoluta desde root_path
+        base_upload = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        if not os.path.isabs(base_upload):
+            base_upload = os.path.join(current_app.root_path, base_upload)
+        
+        # Extraer solo el nombre del archivo
+        filename = os.path.basename(archivo_path)
+        archivo_path = os.path.join(base_upload, 'proyectos', filename)
+        
+        if not os.path.exists(archivo_path):
+            flash(f'Archivo no encontrado: {doc.archivo_url}', 'error')
+            abort(404)
+    
+    # as_attachment=False para mostrar en navegador
+    return send_file(archivo_path, as_attachment=False)
+
 @bp.route('/doc/<int:id_doc>/descargar', methods=['GET'])
 @login_required
 def descargar_doc(id_doc):
     doc = DocumentoProyecto.query.get_or_404(id_doc)
-    if not doc.archivo_url or not os.path.exists(doc.archivo_url):
+    if not doc.archivo_url:
+        flash('No se encontró la URL del archivo', 'error')
         abort(404)
+    
+    # Intentar corregir la ruta si es relativa o incorrecta
+    archivo_path = doc.archivo_url
+    if not os.path.exists(archivo_path):
+        # Intentar con ruta absoluta desde root_path
+        base_upload = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        if not os.path.isabs(base_upload):
+            base_upload = os.path.join(current_app.root_path, base_upload)
+        
+        # Extraer solo el nombre del archivo
+        filename = os.path.basename(archivo_path)
+        archivo_path = os.path.join(base_upload, 'proyectos', filename)
+        
+        if not os.path.exists(archivo_path):
+            flash(f'Archivo no encontrado: {doc.archivo_url}', 'error')
+            abort(404)
+    
     # as_attachment=True para forzar descarga
-    return send_file(doc.archivo_url, as_attachment=True)
+    return send_file(archivo_path, as_attachment=True)
+
