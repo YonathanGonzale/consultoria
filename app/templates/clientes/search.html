@@ -16,17 +16,31 @@
 </form>
 
 {% if clientes %}
-  <div class="list-group">
-    {% for c in clientes %}
-      <div class="list-group-item d-flex justify-content-between align-items-center">
-        <div>
-          <div class="fw-semibold">{{ c.nombre_razon_social }}</div>
-          <div class="text-muted small">{{ c.contacto or '-' }}</div>
+<div class="list-group">
+  {% for c in clientes %}
+  <div class="list-group-item">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <div class="fw-semibold">{{ c.nombre_razon_social }}</div>
+        <div class="text-muted small">
+          {{ c.cedula_identidad or 'Sin cédula' }} · {{ c.telefono or 'Sin teléfono' }} · {{ c.correo_electronico or 'Sin correo' }}
         </div>
-        <a href="{{ url_for('clientes.instituciones', id_cliente=c.id_cliente) }}" class="btn btn-outline-primary">Seleccionar</a>
+        <div class="text-muted small">
+          {{ c.departamento or 'Departamento no cargado' }}{% if c.distrito %} / {{ c.distrito }}{% endif %}{% if c.lugar %} · {{ c.lugar }}{% endif %}
+        </div>
       </div>
-    {% endfor %}
+      <div class="btn-group btn-group-sm">
+        <a href="{{ url_for('clientes.detalle_cliente', id_cliente=c.id_cliente) }}" class="btn btn-outline-primary">
+          <i class="bi bi-card-text"></i> Ficha
+        </a>
+        <a href="{{ url_for('clientes.seleccionar_periodo', id_cliente=c.id_cliente) }}" class="btn btn-outline-success">
+          <i class="bi bi-kanban"></i> Módulos
+        </a>
+      </div>
+    </div>
   </div>
+  {% endfor %}
+</div>
 {% else %}
   <div class="text-muted">Escribe para buscar un cliente…</div>
 {% endif %}

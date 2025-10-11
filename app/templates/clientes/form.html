@@ -1,24 +1,95 @@
 {% extends 'base.html' %}
 {% block content %}
-<h4>Nuevo Cliente</h4>
-<form method="post">
-  <div class="row g-3">
-    <div class="col-md-6">
-      <label class="form-label">Nombre / Razón social</label>
-      <input class="form-control" name="nombre" required>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1">Nuevo Cliente</h4>
+    <p class="text-muted small mb-0">Completa la ficha para habilitar los módulos e iniciar la gestión de proyectos.</p>
+  </div>
+  <a href="{{ url_for('clientes.list_clientes') }}" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Datos Generales</h6>
+
+          <div class="mb-3">
+            <label class="form-label">Nombre / Razón social *</label>
+            <input class="form-control" name="nombre" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Cédula de identidad / RUC</label>
+            <input class="form-control" name="cedula" placeholder="Ej.: 1234567-8 o 80012345-6">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Contacto principal</label>
+            <input class="form-control" name="contacto" placeholder="Nombre del referente o cargo">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Correo electrónico</label>
+            <input type="email" class="form-control" name="correo" placeholder="contacto@empresa.com">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Teléfono</label>
+            <input class="form-control" name="telefono" placeholder="+595...">
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="col-md-6">
-      <label class="form-label">Contacto</label>
-      <input class="form-control" name="contacto">
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Ubicación</h6>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Departamento</label>
+              <input class="form-control" name="departamento">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Distrito</label>
+              <input class="form-control" name="distrito">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Lugar / Barrio</label>
+              <input class="form-control" name="lugar">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Ubicación general</label>
+              <input class="form-control" name="ubicacion" placeholder="Dirección descriptiva, referencia o coordenadas">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Ubicación GPS / Google Maps</label>
+              <input class="form-control" name="ubicacion_gps" placeholder="https://maps.google.com/...">
+              <div class="form-text">Pegá un enlace directo o coordenadas para localizar rápidamente el sitio.</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+
     <div class="col-12">
-      <label class="form-label">Ubicación general</label>
-      <input class="form-control" name="ubicacion">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Documentación</h6>
+          <label class="form-label">Carga de archivos (PDF, JPG, PNG, GIF, WEBP)</label>
+          <input type="file" class="form-control" name="documentos" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp">
+          <div class="form-text">Se guardarán junto a la ficha del cliente. Podés adjuntar cédula, RUC, contratos u otros documentos relevantes.</div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="mt-3">
-    <button class="btn btn-primary">Guardar</button>
-    <a href="{{ url_for('clientes.list_clientes') }}" class="btn btn-secondary">Cancelar</a>
+
+  <div class="d-flex justify-content-end gap-2 mt-4">
+    <a href="{{ url_for('clientes.list_clientes') }}" class="btn btn-outline-secondary">Cancelar</a>
+    <button class="btn btn-primary">Guardar Cliente</button>
   </div>
 </form>
 {% endblock %}

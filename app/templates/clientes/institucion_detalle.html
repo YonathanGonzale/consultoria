@@ -1,11 +1,14 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-3">
   <div class="d-flex align-items-center gap-3">
     <img src="{{ url_for('static', filename='img/logo_cliente.png') }}" 
-         alt="Cliente Logo" class="rounded" style="height:38px;">
+         alt="Cliente Logo" class="rounded" style="height:48px;">
     <div>
       <div class="fw-semibold">{{ cliente.nombre_razon_social }} - {{ institucion }}</div>
+      <div class="text-muted small">
+        {{ cliente.cedula_identidad or 'Sin cédula' }} · {{ cliente.telefono or 'Sin teléfono' }} · {{ cliente.correo_electronico or 'Sin correo' }}
+      </div>
       <div class="text-muted small">
         {% if ano %}
           Selecciona el tipo de trámite - Período {{ ano }}
@@ -15,9 +18,15 @@
       </div>
     </div>
   </div>
-  <div>
+  <div class="d-flex align-items-center gap-2">
+    {% if cliente.ubicacion_gps %}
+    <a href="{{ cliente.ubicacion_gps }}" target="_blank" rel="noopener" class="btn btn-outline-primary">
+      <i class="bi bi-geo-alt"></i> Ver mapa
+    </a>
+    {% endif %}
+    <a href="{{ url_for('clientes.detalle_cliente', id_cliente=cliente.id_cliente) }}" class="btn btn-outline-secondary">Ver ficha</a>
     {% if ano %}
-    <a href="{{ url_for('clientes.instituciones_por_ano', id_cliente=cliente.id_cliente, ano=ano) }}" class="btn btn-outline-secondary me-2">Cambiar Institución</a>
+    <a href="{{ url_for('clientes.instituciones_por_ano', id_cliente=cliente.id_cliente, ano=ano) }}" class="btn btn-outline-secondary">Cambiar institución</a>
     {% endif %}
     <a href="{{ url_for('clientes.nuevo_cliente') }}" class="btn btn-primary">Agregar Cliente</a>
   </div>

@@ -1,39 +1,64 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h4>Clientes</h4>
-  <a href="{{ url_for('clientes.nuevo_cliente') }}" class="btn btn-primary">Agregar Cliente</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1">Clientes</h4>
+    <p class="text-muted small mb-0">Seleccioná un cliente para ver sus módulos activos o la ficha detallada.</p>
+  </div>
+  <a href="{{ url_for('clientes.nuevo_cliente') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle"></i> Agregar Cliente
+  </a>
 </div>
-<form class="mb-3" method="get">
-  <div class="input-group">
-    <input class="form-control" name="q" placeholder="Buscar cliente" value="{{ q }}">
+
+<form class="mb-4" method="get">
+  <div class="input-group input-group-lg">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <input class="form-control" name="q" placeholder="Buscar por nombre o cédula/RUC" value="{{ q }}">
     <button class="btn btn-outline-secondary">Buscar</button>
   </div>
 </form>
-<table class="table table-hover">
-  <thead>
-    <tr>
-      <th>Nombre/Razón social</th>
-      <th>Contacto</th>
-      <th>Saldo pendiente</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for c in clientes %}
-    <tr>
-      <td>
-        <a href="{{ url_for('clientes.seleccionar_periodo', id_cliente=c.id_cliente) }}">
-          {{ c.nombre_razon_social }}
-        </a>
-      </td>
-      <td>{{ c.contacto or '-' }}</td>
-      <td>{{ c.saldo_total_pendiente or 0 }}</td>
-    </tr>
-    {% else %}
-    <tr>
-      <td colspan="3">Sin registros</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Nombre / Razón social</th>
+        <th>Cédula / RUC</th>
+        <th>Contacto</th>
+        <th>Correo</th>
+        <th>Teléfono</th>
+        <th>Departamento</th>
+        <th class="text-end">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in clientes %}
+      <tr>
+        <td class="fw-semibold">{{ c.nombre_razon_social }}</td>
+        <td>{{ c.cedula_identidad or '—' }}</td>
+        <td>{{ c.contacto or '—' }}</td>
+        <td>{{ c.correo_electronico or '—' }}</td>
+        <td>{{ c.telefono or '—' }}</td>
+        <td>{{ c.departamento or '—' }}</td>
+        <td class="text-end">
+          <div class="btn-group btn-group-sm">
+            <a class="btn btn-outline-primary" href="{{ url_for('clientes.detalle_cliente', id_cliente=c.id_cliente) }}" title="Ver ficha">
+              <i class="bi bi-card-text"></i>
+            </a>
+            <a class="btn btn-outline-success" href="{{ url_for('clientes.seleccionar_periodo', id_cliente=c.id_cliente) }}" title="Módulos activos">
+              <i class="bi bi-kanban"></i>
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="7" class="text-center text-muted py-4">
+          <i class="bi bi-people"></i> No se encontraron clientes con el criterio buscado.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}

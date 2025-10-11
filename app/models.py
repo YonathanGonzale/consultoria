@@ -6,14 +6,28 @@ class Cliente(db.Model):
     __tablename__ = 'cliente'
     id_cliente = db.Column(db.Integer, primary_key=True)
     nombre_razon_social = db.Column(db.String(255))
+    cedula_identidad = db.Column(db.String(100))
     contacto = db.Column(db.String(255))
+    telefono = db.Column(db.String(100))
+    correo_electronico = db.Column(db.String(255))
+    departamento = db.Column(db.String(150))
+    distrito = db.Column(db.String(150))
+    lugar = db.Column(db.String(255))
     ubicacion_general = db.Column(db.Text)
+    ubicacion_gps = db.Column(db.Text)
     saldo_total_pagado = db.Column(db.Numeric(12, 2), default=0)
     saldo_total_pendiente = db.Column(db.Numeric(12, 2), default=0)
 
     propiedades = db.relationship('Propiedad', backref='cliente', lazy=True)
     proyectos = db.relationship('Proyecto', backref='cliente', lazy=True)
     vencimientos = db.relationship('Vencimiento', backref='cliente', lazy=True)
+    documentos = db.relationship(
+        'DocumentoCliente',
+        backref='cliente',
+        lazy=True,
+        cascade='all, delete-orphan',
+        order_by='DocumentoCliente.id_documento.desc()'
+    )
 
 
 class Propiedad(db.Model):
@@ -95,3 +109,13 @@ class Notificacion(db.Model):
     id_vencimiento = db.Column(db.Integer, db.ForeignKey('vencimiento.id_vencimiento'))
     tipo = db.Column(db.String(50))
     fecha_envio = db.Column(db.Date, default=date.today)
+
+
+class DocumentoCliente(db.Model):
+    __tablename__ = 'documento_cliente'
+    id_documento = db.Column(db.Integer, primary_key=True)
+    id_cliente = db.Column(db.Integer, db.ForeignKey('cliente.id_cliente'), nullable=False)
+    nombre_original = db.Column(db.String(255))
+    archivo_url = db.Column(db.Text, nullable=False)
+    mime_type = db.Column(db.String(100))
+    uploaded_at = db.Column(db.Date, default=date.today)

@@ -1,8 +1,12 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+import os
+from uuid import uuid4
+from flask import Blueprint, render_template, request, redirect, url_for, current_app, flash, send_file, abort
 from flask_login import login_required
 from datetime import date
 from ..extensions import db
-from ..models import Cliente, Proyecto
+from ..models import Cliente, Proyecto, DocumentoCliente
+from sqlalchemy import or_
+from werkzeug.utils import secure_filename
 
 bp = Blueprint('clientes', __name__)
 
@@ -12,9 +16,53 @@ def list_clientes():
     q = request.args.get('q', '')
     query = Cliente.query
     if q:
-        query = query.filter(Cliente.nombre_razon_social.ilike(f'%{q}%'))
+        like = f'%{q}%'
+        query = query.filter(
+            or_(
+                Cliente.nombre_razon_social.ilike(like),
+                Cliente.cedula_identidad.ilike(like)
+            )
+        )
     clientes = query.order_by(Cliente.nombre_razon_social.asc()).all()
     return render_template('clientes/list.html', clientes=clientes, q=q)
+
+
+ALLOWED_CLIENT_DOCS = {'.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp'}
+
+
+def _cliente_upload_dir(cliente_id):
+    base_upload = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+    if not os.path.isabs(base_upload):
+        base_upload = os.path.join(current_app.root_path, base_upload)
+    target_dir = os.path.join(base_upload, 'clientes', str(cliente_id))
+    os.makedirs(target_dir, exist_ok=True)
+    return target_dir
+
+
+def _guardar_documentos_cliente(cliente, archivos):
+    if not archivos:
+        return
+    target_dir = _cliente_upload_dir(cliente.id_cliente)
+    for archivo in archivos:
+        if not archivo or not archivo.filename:
+            continue
+        ext = os.path.splitext(archivo.filename)[1].lower()
+        if ext not in ALLOWED_CLIENT_DOCS:
+            flash(f'Archivo no permitido: {archivo.filename}', 'warning')
+            continue
+        filename = secure_filename(archivo.filename)
+        unique_name = f"{uuid4().hex}_{filename}"
+        save_path = os.path.join(target_dir, unique_name)
+        archivo.save(save_path)
+
+        doc = DocumentoCliente(
+            id_cliente=cliente.id_cliente,
+            nombre_original=filename,
+            archivo_url=save_path,
+            mime_type=archivo.mimetype or ''
+        )
+        db.session.add(doc)
+
 
 @bp.route('/nuevo', methods=['GET', 'POST'])
 @login_required
@@ -22,11 +70,22 @@ def nuevo_cliente():
     if request.method == 'POST':
         c = Cliente(
             nombre_razon_social=request.form.get('nombre'),
+            cedula_identidad=request.form.get('cedula'),
             contacto=request.form.get('contacto'),
-            ubicacion_general=request.form.get('ubicacion')
+            telefono=request.form.get('telefono'),
+            correo_electronico=request.form.get('correo'),
+            departamento=request.form.get('departamento'),
+            distrito=request.form.get('distrito'),
+            lugar=request.form.get('lugar'),
+            ubicacion_general=request.form.get('ubicacion'),
+            ubicacion_gps=request.form.get('ubicacion_gps')
         )
         db.session.add(c)
         db.session.commit()
+        archivos = request.files.getlist('documentos')
+        _guardar_documentos_cliente(c, archivos)
+        db.session.commit()
+        flash('Cliente creado correctamente', 'success')
         return redirect(url_for('clientes.list_clientes'))
     return render_template('clientes/form.html')
 
@@ -36,8 +95,56 @@ def buscar():
     q = request.args.get('q', '')
     clientes = []
     if q:
-        clientes = Cliente.query.filter(Cliente.nombre_razon_social.ilike(f'%{q}%')).order_by(Cliente.nombre_razon_social.asc()).all()
+        like = f'%{q}%'
+        clientes = Cliente.query.filter(
+            or_(
+                Cliente.nombre_razon_social.ilike(like),
+                Cliente.cedula_identidad.ilike(like)
+            )
+        ).order_by(Cliente.nombre_razon_social.asc()).all()
     return render_template('clientes/search.html', q=q, clientes=clientes)
+
+
+@bp.route('/<int:id_cliente>/detalle', methods=['GET', 'POST'])
+@login_required
+def detalle_cliente(id_cliente):
+    cliente = Cliente.query.get_or_404(id_cliente)
+    if request.method == 'POST':
+        archivos = request.files.getlist('documentos')
+        _guardar_documentos_cliente(cliente, archivos)
+        db.session.commit()
+        flash('Documentos actualizados', 'success')
+        return redirect(url_for('clientes.detalle_cliente', id_cliente=id_cliente))
+    return render_template('clientes/detalle.html', cliente=cliente)
+
+
+@bp.route('/<int:id_cliente>/documento/<int:id_doc>/descargar')
+@login_required
+def descargar_documento_cliente(id_cliente, id_doc):
+    doc = DocumentoCliente.query.get_or_404(id_doc)
+    if doc.id_cliente != id_cliente:
+        abort(404)
+    if not doc.archivo_url or not os.path.exists(doc.archivo_url):
+        flash('Archivo no encontrado', 'danger')
+        return redirect(url_for('clientes.detalle_cliente', id_cliente=id_cliente))
+    return send_file(doc.archivo_url, as_attachment=True, download_name=doc.nombre_original or 'documento')
+
+
+@bp.route('/<int:id_cliente>/documento/<int:id_doc>/eliminar', methods=['POST'])
+@login_required
+def eliminar_documento_cliente(id_cliente, id_doc):
+    doc = DocumentoCliente.query.get_or_404(id_doc)
+    if doc.id_cliente != id_cliente:
+        abort(404)
+    try:
+        if doc.archivo_url and os.path.exists(doc.archivo_url):
+            os.remove(doc.archivo_url)
+    except Exception:
+        pass
+    db.session.delete(doc)
+    db.session.commit()
+    flash('Documento eliminado', 'success')
+    return redirect(url_for('clientes.detalle_cliente', id_cliente=id_cliente))
 
 @bp.route('/<int:id_cliente>/instituciones')
 @login_required

@@ -3,11 +3,23 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-md-8 mx-auto">
-      <div class="d-flex align-items-center mb-4">
-        <i class="bi bi-person-circle fs-1 me-3 text-primary"></i>
-        <div>
-          <h4 class="mb-0">{{ cliente.nombre_razon_social }}</h4>
-          <p class="text-muted mb-0">Selecciona el período</p>
+      <div class="card shadow-sm mb-4">
+        <div class="card-body d-flex flex-column flex-md-row align-items-md-center gap-3">
+          <i class="bi bi-person-circle fs-1 text-primary"></i>
+          <div class="flex-grow-1">
+            <h4 class="mb-1">{{ cliente.nombre_razon_social }}</h4>
+            <div class="text-muted small">
+              {{ cliente.cedula_identidad or 'Sin cédula' }} · {{ cliente.telefono or 'Sin teléfono' }} · {{ cliente.correo_electronico or 'Sin correo' }}
+            </div>
+            <div class="text-muted small">
+              {{ cliente.departamento or 'Departamento no cargado' }}{% if cliente.distrito %} / {{ cliente.distrito }}{% endif %}{% if cliente.lugar %} · {{ cliente.lugar }}{% endif %}
+            </div>
+          </div>
+          {% if cliente.ubicacion_gps %}
+          <a class="btn btn-outline-primary btn-sm" href="{{ cliente.ubicacion_gps }}" target="_blank" rel="noopener">
+            <i class="bi bi-geo-alt"></i> Ver mapa
+          </a>
+          {% endif %}
         </div>
       </div>
 
