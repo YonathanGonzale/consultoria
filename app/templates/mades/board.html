@@ -19,17 +19,12 @@
             {% for p in items %}
             <li class="list-group-item">
               <div class="d-flex justify-content-between">
-                <strong>{{ p.tipo_tramite }}</strong>
+                <strong>{{ p.subtipo }}</strong>
                 <span class="badge bg-secondary">{{ p.anho }}</span>
               </div>
               <div class="text-muted small">
-                Plazo: {{ p.plazo_limite or '-' }}
+                Licencia vence: {{ p.fecha_vencimiento_licencia.year if p.fecha_vencimiento_licencia else '—' }}
               </div>
-              {% if p.propiedad %}
-              <div class="text-muted small">
-                Propiedad: {{ p.propiedad.finca or p.propiedad.id_propiedad }}
-              </div>
-              {% endif %}
             </li>
             {% else %}
             <li class="list-group-item text-muted small">Sin proyectos</li>
@@ -59,38 +54,27 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label">Tipo de trámite</label>
-            <input type="text" class="form-control" name="tipo_tramite" placeholder="EIA, EDE, Otros" required>
+            <label class="form-label">Subtipo</label>
+            <input type="text" class="form-control" name="subtipo" placeholder="EIA, PGAG, Otros" required>
           </div>
 
           <div class="mb-3">
             <label class="form-label">Estado</label>
             <select class="form-select" name="estado">
-              <option value="pendiente" selected>pendiente</option>
-              <option value="en proceso">en proceso</option>
-              <option value="entregado">entregado</option>
-              <option value="finalizado">finalizado</option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Propiedad</label>
-            <select class="form-select" name="id_propiedad">
-              <option value="">Sin propiedad</option>
-              {% for pr in propiedades %}
-                <option value="{{ pr.id_propiedad }}">{{ pr.finca or ('Propiedad #' ~ pr.id_propiedad) }}</option>
-              {% endfor %}
+              <option value="pendiente" selected>Pendiente</option>
+              <option value="en_proceso">En proceso</option>
+              <option value="finalizado">Finalizado</option>
             </select>
           </div>
 
           <div class="row g-2">
             <div class="col">
-              <label class="form-label">Firma de contrato</label>
-              <input type="date" class="form-control" name="fecha_firma_contrato">
+              <label class="form-label">Fecha emisión licencia</label>
+              <input type="date" class="form-control" name="fecha_emision_licencia" required>
             </div>
             <div class="col">
-              <label class="form-label">Plazo límite</label>
-              <input type="date" class="form-control" name="plazo_limite">
+              <label class="form-label">Fecha vencimiento licencia <span class="text-muted">(opcional)</span></label>
+              <input type="date" class="form-control" name="fecha_vencimiento_licencia">
             </div>
           </div>
         </div>

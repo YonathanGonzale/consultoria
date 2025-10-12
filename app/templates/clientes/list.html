@@ -34,7 +34,11 @@
     <tbody>
       {% for c in clientes %}
       <tr>
-        <td class="fw-semibold">{{ c.nombre_razon_social }}</td>
+        <td class="fw-semibold">
+          <a href="{{ url_for('clientes.modulos', id_cliente=c.id_cliente) }}" class="text-decoration-none text-body">
+            {{ c.nombre_razon_social }}
+          </a>
+        </td>
         <td>{{ c.cedula_identidad or '—' }}</td>
         <td>{{ c.contacto or '—' }}</td>
         <td>{{ c.correo_electronico or '—' }}</td>
@@ -45,7 +49,7 @@
             <a class="btn btn-outline-primary" href="{{ url_for('clientes.detalle_cliente', id_cliente=c.id_cliente) }}" title="Ver ficha">
               <i class="bi bi-card-text"></i>
             </a>
-            <a class="btn btn-outline-success" href="{{ url_for('clientes.seleccionar_periodo', id_cliente=c.id_cliente) }}" title="Módulos activos">
+            <a class="btn btn-outline-success" href="{{ url_for('clientes.modulos', id_cliente=c.id_cliente) }}" title="Módulos activos">
               <i class="bi bi-kanban"></i>
             </a>
           </div>

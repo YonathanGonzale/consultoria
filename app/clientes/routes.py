@@ -5,7 +5,7 @@ from flask_login import login_required
 from datetime import date
 from ..extensions import db
 from ..models import Cliente, Proyecto, DocumentoCliente
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from werkzeug.utils import secure_filename
 
 bp = Blueprint('clientes', __name__)
@@ -28,6 +28,77 @@ def list_clientes():
 
 
 ALLOWED_CLIENT_DOCS = {'.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp'}
+
+
+MODULE_DEFINITIONS = {
+    'MADES': {
+        'label': 'MADES',
+        'full_name': 'Ministerio del Ambiente y Desarrollo Sostenible',
+        'logo': 'img/logo_mades.png',
+        'color': 'success',
+        'icon': 'bi-building'
+    },
+    'INFONA': {
+        'label': 'INFONA',
+        'full_name': 'Instituto Forestal Nacional',
+        'logo': 'img/logo_infona.png',
+        'color': 'teal',
+        'icon': 'bi-tree'
+    },
+    'SENAVE': {
+        'label': 'SENAVE',
+        'full_name': 'Servicio Nacional de Calidad y Sanidad Vegetal y de Semillas',
+        'logo': 'img/logo_senave.png',
+        'color': 'info',
+        'icon': 'bi-flower3'
+    },
+    'Asesoría Jurídica': {
+        'label': 'Asesoría Jurídica',
+        'full_name': 'Asesoría Jurídica',
+        'logo': 'img/logo_cliente.png',
+        'color': 'primary',
+        'icon': 'bi-briefcase'
+    },
+    'Certificado de Servicios Ambientales': {
+        'label': 'Certificado de Servicios Ambientales',
+        'full_name': 'Certificados de Servicios Ambientales',
+        'logo': 'img/logo_cliente.png',
+        'color': 'warning',
+        'icon': 'bi-award'
+    },
+    'Otros': {
+        'label': 'Otros',
+        'full_name': 'Otros Módulos',
+        'logo': 'img/logo_cliente.png',
+        'color': 'secondary',
+        'icon': 'bi-grid'
+    },
+}
+
+
+def _module_meta(key):
+    if not key:
+        key = 'Otros'
+    data = MODULE_DEFINITIONS.get(key, MODULE_DEFINITIONS['Otros'])
+    data = data.copy()
+    data['key'] = key
+    data['logo_url'] = url_for('static', filename=data['logo'])
+    return data
+
+
+def _optional(form, name):
+    value = form.get(name)
+    if value is None:
+        return None
+    value = value.strip()
+    return value or None
+
+
+def _normalize_subtipo(value):
+    if value is None:
+        return 'Otros'
+    normalized = value.strip()
+    return normalized or 'Otros'
 
 
 def _cliente_upload_dir(cliente_id):
@@ -70,15 +141,15 @@ def nuevo_cliente():
     if request.method == 'POST':
         c = Cliente(
             nombre_razon_social=request.form.get('nombre'),
-            cedula_identidad=request.form.get('cedula'),
-            contacto=request.form.get('contacto'),
-            telefono=request.form.get('telefono'),
-            correo_electronico=request.form.get('correo'),
-            departamento=request.form.get('departamento'),
-            distrito=request.form.get('distrito'),
-            lugar=request.form.get('lugar'),
-            ubicacion_general=request.form.get('ubicacion'),
-            ubicacion_gps=request.form.get('ubicacion_gps')
+            cedula_identidad=_optional(request.form, 'cedula'),
+            contacto=_optional(request.form, 'contacto'),
+            telefono=_optional(request.form, 'telefono'),
+            correo_electronico=_optional(request.form, 'correo'),
+            departamento=_optional(request.form, 'departamento'),
+            distrito=_optional(request.form, 'distrito'),
+            lugar=_optional(request.form, 'lugar'),
+            ubicacion_general=_optional(request.form, 'ubicacion'),
+            ubicacion_gps=_optional(request.form, 'ubicacion_gps')
         )
         db.session.add(c)
         db.session.commit()
@@ -88,6 +159,32 @@ def nuevo_cliente():
         flash('Cliente creado correctamente', 'success')
         return redirect(url_for('clientes.list_clientes'))
     return render_template('clientes/form.html')
+
+
+@bp.route('/<int:id_cliente>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_cliente(id_cliente):
+    cliente = Cliente.query.get_or_404(id_cliente)
+    if request.method == 'POST':
+        nombre = request.form.get('nombre', '').strip()
+        if not nombre:
+            flash('El nombre/razón social es obligatorio.', 'danger')
+            return redirect(url_for('clientes.editar_cliente', id_cliente=id_cliente))
+
+        cliente.nombre_razon_social = nombre
+        cliente.cedula_identidad = _optional(request.form, 'cedula')
+        cliente.contacto = _optional(request.form, 'contacto')
+        cliente.telefono = _optional(request.form, 'telefono')
+        cliente.correo_electronico = _optional(request.form, 'correo')
+        cliente.departamento = _optional(request.form, 'departamento')
+        cliente.distrito = _optional(request.form, 'distrito')
+        cliente.lugar = _optional(request.form, 'lugar')
+        cliente.ubicacion_general = _optional(request.form, 'ubicacion')
+        cliente.ubicacion_gps = _optional(request.form, 'ubicacion_gps')
+        db.session.commit()
+        flash('Cliente actualizado correctamente', 'success')
+        return redirect(url_for('clientes.modulos', id_cliente=id_cliente))
+    return render_template('clientes/edit.html', cliente=cliente)
 
 @bp.route('/buscar')
 @login_required
@@ -146,170 +243,130 @@ def eliminar_documento_cliente(id_cliente, id_doc):
     flash('Documento eliminado', 'success')
     return redirect(url_for('clientes.detalle_cliente', id_cliente=id_cliente))
 
-@bp.route('/<int:id_cliente>/instituciones')
+@bp.route('/<int:id_cliente>/modulos')
 @login_required
-def instituciones(id_cliente):
+def modulos(id_cliente):
     cliente = Cliente.query.get_or_404(id_cliente)
-    instituciones = [
-        {
-        "key": "MADES",
-        "full_name": "Ministerio del Ambiente y Desarrollo Sostenible",
-        "logo": url_for('static', filename='img/logo_mades.png')
-    },
-    {
-        "key": "INFONA",
-        "full_name": "Instituto Forestal Nacional",
-        "logo": url_for('static', filename='img/logo_infona.png')
-    },
-    {
-        "key": "SENAVE",
-        "full_name": "Servicio Nacional de Calidad y Sanidad Vegetal y de Semillas",
-        "logo": url_for('static', filename='img/logo_senave.png')
-    },
-    {
-        "key": "Otros",
-        "full_name": "Otras Instituciones",
-        "logo": url_for('static', filename='img/logo_cliente.png')
-    },
-    ]
-    return render_template('clientes/instituciones.html', cliente=cliente, instituciones=instituciones)
+    module_rows = (
+        db.session.query(Proyecto.institucion, func.count(Proyecto.id_proyecto))
+        .filter(Proyecto.id_cliente == id_cliente)
+        .group_by(Proyecto.institucion)
+        .all()
+    )
 
-@bp.route('/<int:id_cliente>/institucion/<string:inst>')
+    modules = []
+    total_proyectos = 0
+    for institucion, cantidad in module_rows:
+        meta = _module_meta(institucion)
+        modules.append({
+            'key': meta['key'],
+            'label': meta['label'],
+            'full_name': meta['full_name'],
+            'logo': meta['logo_url'],
+            'color': meta['color'],
+            'icon': meta['icon'],
+            'count': cantidad,
+            'url': url_for('clientes.modulo_subtipos', id_cliente=id_cliente, inst=meta['key']),
+        })
+        total_proyectos += cantidad
+
+    modules.sort(key=lambda item: item['label'])
+    create_project_url = url_for('proyectos.nuevo') + f'?id_cliente={id_cliente}'
+
+    return render_template(
+        'clientes/instituciones.html',
+        cliente=cliente,
+        modules=modules,
+        total_proyectos=total_proyectos,
+        no_projects=len(modules) == 0,
+        create_project_url=create_project_url,
+    )
+
+
+def _subtipo_filter(query, inst, subtipo):
+    inst = inst or 'Otros'
+    query = query.filter(Proyecto.institucion == inst)
+    normalized = _normalize_subtipo(subtipo)
+    if normalized.lower() == 'otros':
+        query = query.filter(
+            or_(
+                Proyecto.subtipo.is_(None),
+                Proyecto.subtipo == '',
+                Proyecto.subtipo.ilike('otros')
+            )
+        )
+    else:
+        query = query.filter(Proyecto.subtipo == normalized)
+    return query, normalized
+
+
+@bp.route('/<int:id_cliente>/modulo/<string:inst>/subtipos')
 @login_required
-def institucion_detalle(id_cliente, inst):
+def modulo_subtipos(id_cliente, inst):
     cliente = Cliente.query.get_or_404(id_cliente)
-    tipos = [
-    {
-        "name": "EIA",
-        "desc": "Evaluación de Impacto Ambiental",
-        "color": "success",
-        "icon": "bi-tree-fill"
-    },
-    {
-        "name": "Auditoría",
-        "desc": "Auditorías ambientales",
-        "color": "danger",
-        "icon": "bi-clipboard-check-fill"
-    },
-    {
-        "name": "Informe técnico",
-        "desc": "Informes técnicos especializados",
-        "color": "warning",
-        "icon": "bi-file-text-fill"
-    },
-    {
-        "name": "Registro de silo",
-        "desc": "Registro y habilitación de silos",
-        "color": "info",
-        "icon": "bi-building-fill"
-    },
-    {
-        "name": "Otros",
-        "desc": "Otros tipos de trámites",
-        "color": "secondary",
-        "icon": "bi-three-dots"
-    }
-]
-    return render_template('clientes/institucion_detalle.html', cliente=cliente, institucion=inst, tipos=tipos)
+    meta = _module_meta(inst)
 
-# Nuevas rutas basadas en consultoria-main
-@bp.route('/<int:id_cliente>/periodos')
+    rows = (
+        db.session.query(Proyecto.subtipo, func.count(Proyecto.id_proyecto))
+        .filter(Proyecto.id_cliente == id_cliente, Proyecto.institucion == meta['key'])
+        .group_by(Proyecto.subtipo)
+        .order_by(func.count(Proyecto.id_proyecto).desc())
+        .all()
+    )
+
+    subtipos = []
+    total_subtipos = 0
+    for raw_subtipo, cantidad in rows:
+        nombre = (raw_subtipo or 'Otros').strip() or 'Otros'
+        subtipos.append({
+            'name': nombre,
+            'count': cantidad,
+            'url': url_for('clientes.modulo_subtipo_anhos', id_cliente=id_cliente, inst=meta['key'], subtipo=nombre)
+        })
+        total_subtipos += 1
+
+    create_project_url = url_for('proyectos.nuevo') + f'?id_cliente={id_cliente}&institucion={meta["key"]}'
+
+    return render_template(
+        'clientes/institucion_detalle.html',
+        cliente=cliente,
+        modulo=meta,
+        subtipos=subtipos,
+        total_subtipos=total_subtipos,
+        no_subtipos=len(subtipos) == 0,
+        create_project_url=create_project_url
+    )
+
+
+@bp.route('/<int:id_cliente>/modulo/<string:inst>/subtipo/<path:subtipo>/anhos')
 @login_required
-def seleccionar_periodo(id_cliente):
+def modulo_subtipo_anhos(id_cliente, inst, subtipo):
     cliente = Cliente.query.get_or_404(id_cliente)
+    meta = _module_meta(inst)
+    subtipo_label = _normalize_subtipo(subtipo)
 
-    anos_disponibles = db.session.query(Proyecto.anho).filter_by(id_cliente=id_cliente).distinct().order_by(Proyecto.anho.desc()).all()
-    anos = [ano[0] for ano in anos_disponibles if ano[0]]
-    if not anos:
-        ano_actual = date.today().year
-        anos = [ano_actual, ano_actual - 1, ano_actual - 2]
+    base_query = db.session.query(Proyecto.anho).filter(Proyecto.id_cliente == id_cliente)
+    base_query, normalized_subtipo = _subtipo_filter(base_query, meta['key'], subtipo_label)
+    anos_rows = (
+        base_query
+        .filter(Proyecto.anho.isnot(None))
+        .distinct()
+        .order_by(Proyecto.anho.desc())
+        .all()
+    )
+    anos = [row[0] for row in anos_rows]
 
-    return render_template('clientes/periodos.html', cliente=cliente, anos=anos)
+    create_project_url = (
+        url_for('proyectos.nuevo')
+        + f'?id_cliente={id_cliente}&institucion={meta["key"]}&subtipo={normalized_subtipo}'
+    )
 
-
-@bp.route('/<int:id_cliente>/ano/<int:ano>/instituciones')
-@login_required
-def instituciones_por_ano(id_cliente, ano):
-    cliente = Cliente.query.get_or_404(id_cliente)
-
-    instituciones_con_proyectos = db.session.query(Proyecto.institucion).filter_by(
-        id_cliente=id_cliente, anho=ano
-    ).distinct().all()
-    instituciones_activas = [inst[0] for inst in instituciones_con_proyectos if inst[0]]
-
-    todas_instituciones = [
-        {
-            "key": "MADES",
-            "full_name": "Ministerio del Ambiente y Desarrollo Sostenible",
-            "logo": url_for('static', filename='img/logo_mades.png')
-        },
-        {
-            "key": "INFONA",
-            "full_name": "Instituto Forestal Nacional",
-            "logo": url_for('static', filename='img/logo_infona.png')
-        },
-        {
-            "key": "SENAVE",
-            "full_name": "Servicio Nacional de Calidad y Sanidad Vegetal y de Semillas",
-            "logo": url_for('static', filename='img/logo_senave.png')
-        },
-        {
-            "key": "Otros",
-            "full_name": "Otras Instituciones",
-            "logo": url_for('static', filename='img/logo_cliente.png')
-        },
-    ]
-
-    for inst in todas_instituciones:
-        inst['tiene_proyectos'] = inst['key'] in instituciones_activas
-
-    return render_template('clientes/instituciones.html', cliente=cliente, instituciones=todas_instituciones, ano=ano)
-
-
-@bp.route('/<int:id_cliente>/ano/<int:ano>/institucion/<string:inst>')
-@login_required
-def institucion_detalle_por_ano(id_cliente, ano, inst):
-    cliente = Cliente.query.get_or_404(id_cliente)
-
-    tipos_con_proyectos = db.session.query(Proyecto.tipo_tramite).filter_by(
-        id_cliente=id_cliente, anho=ano, institucion=inst
-    ).distinct().all()
-    tipos_activos = [tipo[0] for tipo in tipos_con_proyectos if tipo[0]]
-
-    todos_tipos = [
-        {
-            "name": "EIA",
-            "desc": "Evaluación de Impacto Ambiental",
-            "color": "success",
-            "icon": "bi-tree-fill"
-        },
-        {
-            "name": "Auditoría",
-            "desc": "Auditorías ambientales",
-            "color": "danger",
-            "icon": "bi-clipboard-check-fill"
-        },
-        {
-            "name": "Informe técnico",
-            "desc": "Informes técnicos especializados",
-            "color": "warning",
-            "icon": "bi-file-text-fill"
-        },
-        {
-            "name": "Registro de silo",
-            "desc": "Registro y habilitación de silos",
-            "color": "info",
-            "icon": "bi-building-fill"
-        },
-        {
-            "name": "Otros",
-            "desc": "Otros tipos de trámites",
-            "color": "secondary",
-            "icon": "bi-three-dots"
-        }
-    ]
-
-    for tipo in todos_tipos:
-        tipo['tiene_proyectos'] = tipo['name'] in tipos_activos
-
-    return render_template('clientes/institucion_detalle.html', cliente=cliente, institucion=inst, tipos=todos_tipos, ano=ano)
+    return render_template(
+        'clientes/periodos.html',
+        cliente=cliente,
+        modulo=meta,
+        subtipo=normalized_subtipo,
+        anos=anos,
+        no_anos=len(anos) == 0,
+        create_project_url=create_project_url
+    )

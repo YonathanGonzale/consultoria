@@ -12,8 +12,8 @@ def index():
     total_clientes = db.session.query(Cliente).count()
     proximos_proyectos = (
         db.session.query(Proyecto)
-        .filter(Proyecto.plazo_limite.isnot(None))
-        .order_by(Proyecto.plazo_limite.asc())
+        .filter(Proyecto.fecha_vencimiento_licencia.isnot(None))
+        .order_by(Proyecto.fecha_vencimiento_licencia.asc())
         .limit(10)
         .all()
     )
@@ -21,7 +21,7 @@ def index():
     hoy = date.today()
     proximos_items = []
     for proyecto in proximos_proyectos:
-        dias_restantes = (proyecto.plazo_limite - hoy).days
+        dias_restantes = (proyecto.fecha_vencimiento_licencia - hoy).days
         if dias_restantes <= 30:
             badge_class = 'bg-danger'
         elif dias_restantes <= 60:

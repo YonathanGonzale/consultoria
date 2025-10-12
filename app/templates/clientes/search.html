@@ -21,7 +21,11 @@
   <div class="list-group-item">
     <div class="d-flex justify-content-between align-items-start">
       <div>
-        <div class="fw-semibold">{{ c.nombre_razon_social }}</div>
+        <div class="fw-semibold">
+          <a href="{{ url_for('clientes.modulos', id_cliente=c.id_cliente) }}" class="text-decoration-none text-body">
+            {{ c.nombre_razon_social }}
+          </a>
+        </div>
         <div class="text-muted small">
           {{ c.cedula_identidad or 'Sin cédula' }} · {{ c.telefono or 'Sin teléfono' }} · {{ c.correo_electronico or 'Sin correo' }}
         </div>
@@ -33,7 +37,7 @@
         <a href="{{ url_for('clientes.detalle_cliente', id_cliente=c.id_cliente) }}" class="btn btn-outline-primary">
           <i class="bi bi-card-text"></i> Ficha
         </a>
-        <a href="{{ url_for('clientes.seleccionar_periodo', id_cliente=c.id_cliente) }}" class="btn btn-outline-success">
+        <a href="{{ url_for('clientes.modulos', id_cliente=c.id_cliente) }}" class="btn btn-outline-success">
           <i class="bi bi-kanban"></i> Módulos
         </a>
       </div>

@@ -9,13 +9,14 @@
 </div>
 
 <h5 class="mt-4">Próximos vencimientos</h5>
-<table class="table table-sm">
+<table class="table table-sm align-middle">
   <thead>
     <tr>
       <th>Cliente</th>
-      <th>Tipo</th>
+      <th>Proyecto</th>
       <th>Subtipo</th>
-      <th>Vence</th>
+      <th>Estado</th>
+      <th>Vencimiento licencia</th>
       <th>Días restantes</th>
     </tr>
   </thead>
@@ -29,9 +30,15 @@
             {{ p.cliente.nombre_razon_social if p.cliente else '-' }}
           </a>
         </td>
-        <td>{{ p.institucion or '-' }}</td>
-        <td>{{ p.tipo_tramite or '-' }}</td>
-        <td>{{ p.plazo_limite.strftime('%d/%m/%Y') if p.plazo_limite else '-' }}</td>
+        <td>{{ p.nombre_proyecto or (p.institucion ~ ' ' ~ (p.anho or '')) }}</td>
+        <td>{{ p.subtipo or '-' }}</td>
+        <td>
+          {% set estado_val = p.estado.value if p.estado else 'pendiente' %}
+          <span class="badge bg-{% if estado_val == 'finalizado' %}success{% elif estado_val == 'en_proceso' %}warning text-dark{% else %}secondary{% endif %}">
+            {{ estado_val.replace('_', ' ')|title }}
+          </span>
+        </td>
+        <td>{{ p.fecha_vencimiento_licencia.year if p.fecha_vencimiento_licencia else '-' }}</td>
         <td>
           <span class="badge {{ item.badge_class }}">
             {% if item.dias_restantes < 0 %}
@@ -43,7 +50,7 @@
         </td>
       </tr>
     {% else %}
-      <tr><td colspan="5">Sin datos</td></tr>
+      <tr><td colspan="6">Sin datos</td></tr>
     {% endfor %}
   </tbody>
 </table>

@@ -1,123 +1,69 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-3">
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
   <div class="d-flex align-items-center gap-3">
-    <img src="{{ url_for('static', filename='img/logo_cliente.png') }}" 
-         alt="Cliente Logo" class="rounded" style="height:48px;">
+    <img src="{{ modulo.logo_url }}" alt="{{ modulo.label }}" class="rounded shadow-sm" style="height:64px;">
     <div>
-      <div class="fw-semibold">{{ cliente.nombre_razon_social }} - {{ institucion }}</div>
+      <h4 class="mb-1">{{ cliente.nombre_razon_social }}</h4>
+      <div class="text-muted small">{{ modulo.full_name }} · {{ modulo.label }}</div>
       <div class="text-muted small">
         {{ cliente.cedula_identidad or 'Sin cédula' }} · {{ cliente.telefono or 'Sin teléfono' }} · {{ cliente.correo_electronico or 'Sin correo' }}
       </div>
-      <div class="text-muted small">
-        {% if ano %}
-          Selecciona el tipo de trámite - Período {{ ano }}
-        {% else %}
-          Selecciona el tipo de trámite
-        {% endif %}
-      </div>
     </div>
   </div>
-  <div class="d-flex align-items-center gap-2">
-    {% if cliente.ubicacion_gps %}
-    <a href="{{ cliente.ubicacion_gps }}" target="_blank" rel="noopener" class="btn btn-outline-primary">
-      <i class="bi bi-geo-alt"></i> Ver mapa
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{{ url_for('clientes.modulos', id_cliente=cliente.id_cliente) }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Volver a módulos
     </a>
-    {% endif %}
-    <a href="{{ url_for('clientes.detalle_cliente', id_cliente=cliente.id_cliente) }}" class="btn btn-outline-secondary">Ver ficha</a>
-    {% if ano %}
-    <a href="{{ url_for('clientes.instituciones_por_ano', id_cliente=cliente.id_cliente, ano=ano) }}" class="btn btn-outline-secondary">Cambiar institución</a>
-    {% endif %}
-    <a href="{{ url_for('clientes.nuevo_cliente') }}" class="btn btn-primary">Agregar Cliente</a>
+    <a href="{{ create_project_url }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-circle"></i> Crear proyecto en {{ modulo.label }}
+    </a>
   </div>
 </div>
 
-<div class="row g-3">
-  {% for t in tipos %}
-  <div class="col-md-3">
-    <a class="btn btn-{{ t.color }} tramite-card text-decoration-none position-relative
-       {% if t.get('tiene_proyectos') %}border-white border-3 shadow-lg{% endif %}" 
-       href="{{ url_for('proyectos.board', id_cliente=cliente.id_cliente, ano=ano if ano else 2024, inst=institucion, tipo=t.name) }}">
-      
-      {% if t.get('tiene_proyectos') %}
-      <div class="position-absolute top-0 end-0 p-1">
-        <span class="badge bg-white text-dark">
-          <i class="bi bi-check-circle-fill text-success"></i>
-        </span>
+{% if no_subtipos %}
+  <div class="alert alert-light border text-muted">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-info-circle fs-4"></i>
+      <div>
+        <strong>Aún no hay subtipos registrados en {{ modulo.label }} para este cliente.</strong>
+        <div>Creá un proyecto para habilitar los submódulos.</div>
       </div>
-      {% endif %}
-      
-      <div class="tramite-icon">
-        <i class="bi {{ t.icon }}"></i>
-        {% if t.get('tiene_proyectos') %}
-        <i class="bi bi-star-fill text-warning position-absolute" style="top: 5px; right: 25px; font-size: 0.8rem;"></i>
-        {% endif %}
-      </div>
-      <div class="tramite-title">{{ t.name }}</div>
-      <div class="tramite-desc">{{ t.desc }}</div>
-      
-      {% if t.get('tiene_proyectos') %}
-      <small class="d-block mt-2 fw-bold opacity-75">
-        <i class="bi bi-folder-fill"></i> Con proyectos
-      </small>
-      {% else %}
-      <small class="d-block mt-2 opacity-50">
-        <i class="bi bi-folder"></i> Sin proyectos
-      </small>
-      {% endif %}
-    </a>
+    </div>
+    <div class="mt-3">
+      <a href="{{ create_project_url }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Crear proyecto
+      </a>
+    </div>
   </div>
-  {% endfor %}
-</div>
-
-<div class="mt-4">
-  {% if ano %}
-  <a href="{{ url_for('clientes.instituciones_por_ano', id_cliente=cliente.id_cliente, ano=ano) }}" class="btn btn-secondary">
-    <i class="bi bi-arrow-left"></i> Volver a Instituciones
-  </a>
-  {% else %}
-  <a href="{{ url_for('clientes.instituciones', id_cliente=cliente.id_cliente) }}" class="btn btn-secondary">
-    <i class="bi bi-arrow-left"></i> Volver a Instituciones
-  </a>
-  {% endif %}
-</div>
+{% else %}
+  <div class="row g-3">
+    {% for subtipo in subtipos %}
+    <div class="col-md-4 col-lg-3">
+      <a href="{{ subtipo.url }}" class="text-decoration-none">
+        <div class="card h-100 shadow-sm border-0 subtipo-card">
+          <div class="card-body text-center py-4">
+            <div class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width:64px;height:64px;">
+              <i class="bi bi-folder-fill fs-3"></i>
+            </div>
+            <h6 class="fw-semibold text-uppercase mb-1">{{ subtipo.name }}</h6>
+            <p class="text-muted small mb-2">Proyectos en este submódulo</p>
+            <span class="badge bg-primary">{{ subtipo.count }} proyecto{{ 's' if subtipo.count != 1 else '' }}</span>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+{% endif %}
 
 <style>
-.tramite-card {
-  height: 180px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
+.subtipo-card {
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  position: relative;
 }
-
-.tramite-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-.tramite-icon {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
-  position: relative;
-}
-
-.tramite-title {
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.tramite-desc {
-  font-size: 0.85rem;
-  opacity: 0.8;
-}
-
-.border-3 {
-  border-width: 3px !important;
+.subtipo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.12);
 }
 </style>
 {% endblock %}

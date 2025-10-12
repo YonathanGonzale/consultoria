@@ -1,4 +1,7 @@
+import enum
 from datetime import date
+from decimal import Decimal
+from sqlalchemy.ext.hybrid import hybrid_property
 from .extensions import db
 
 
@@ -47,21 +50,70 @@ class Propiedad(db.Model):
     vencimientos = db.relationship('Vencimiento', backref='propiedad', lazy=True)
 
 
+class ProyectoEstado(enum.Enum):
+    pendiente = 'pendiente'
+    en_proceso = 'en_proceso'
+    finalizado = 'finalizado'
+
+
 class Proyecto(db.Model):
     __tablename__ = 'proyecto'
     id_proyecto = db.Column(db.Integer, primary_key=True)
     id_cliente = db.Column(db.Integer, db.ForeignKey('cliente.id_cliente'))
     anho = db.Column(db.Integer)
     institucion = db.Column(db.String(100))
-    tipo_tramite = db.Column(db.String(100))
+    nombre_proyecto = db.Column(db.String(255))
+    subtipo = db.Column(db.String(100))
+    anio_inicio = db.Column(db.Integer)
+    exp_siam = db.Column(db.String(120))
+    fecha_emision_licencia = db.Column(db.Date)
+    fecha_vencimiento_licencia = db.Column(db.Date)
+    costo_total = db.Column(db.Numeric(12, 2))
+    porcentaje_entrega = db.Column(db.Numeric(5, 2))
+    monto_entregado = db.Column(db.Numeric(12, 2))
+    saldo_restante = db.Column(db.Numeric(12, 2))
     fecha_firma_contrato = db.Column(db.Date)
-    estado = db.Column(db.String(50))
+    estado = db.Column(db.Enum(ProyectoEstado), nullable=False, default=ProyectoEstado.pendiente)
     plazo_limite = db.Column(db.Date)
     id_propiedad = db.Column(db.Integer, db.ForeignKey('propiedad.id_propiedad'))
+    lugar = db.Column(db.String(255))
+    distrito = db.Column(db.String(150))
+    departamento = db.Column(db.String(150))
+    finca = db.Column(db.String(120))
+    matricula = db.Column(db.String(120))
+    padron = db.Column(db.String(120))
+    lote = db.Column(db.String(120))
+    manzana = db.Column(db.String(120))
+    fraccion = db.Column(db.String(120))
+    superficie = db.Column(db.Numeric(12, 2))
+    mapa_archivo_url = db.Column(db.Text)
+    factura_archivo_url = db.Column(db.Text)
 
     documentos = db.relationship('DocumentoProyecto', backref='proyecto', lazy=True)
     pagos = db.relationship('Pago', backref='proyecto', lazy=True)
     facturas = db.relationship('Factura', backref='proyecto', lazy=True)
+
+    @hybrid_property
+    def monto_entregado_calculado(self):
+        if self.costo_total is None or self.porcentaje_entrega is None:
+            return self.monto_entregado
+        base = self.costo_total if self.costo_total is not None else Decimal('0')
+        porcentaje = self.porcentaje_entrega if self.porcentaje_entrega is not None else Decimal('0')
+        divisor = Decimal('100')
+        return (base * porcentaje) / divisor
+
+    @hybrid_property
+    def saldo_restante_calculado(self):
+        base = self.costo_total if self.costo_total is not None else Decimal('0')
+        entregado = self.monto_entregado_calculado if self.monto_entregado_calculado is not None else Decimal('0')
+        return base - entregado
+
+    def actualizar_finanzas(self):
+        """Recalcula los montos almacenados para mantener consistencia."""
+        calculado = self.monto_entregado_calculado
+        if calculado is not None:
+            self.monto_entregado = calculado
+        self.saldo_restante = self.saldo_restante_calculado
 
 
 class DocumentoProyecto(db.Model):
@@ -70,6 +122,10 @@ class DocumentoProyecto(db.Model):
     id_proyecto = db.Column(db.Integer, db.ForeignKey('proyecto.id_proyecto'))
     tipo = db.Column(db.String(100))
     archivo_url = db.Column(db.Text)
+    nombre_original = db.Column(db.String(255))
+    categoria = db.Column(db.String(100))
+    mime_type = db.Column(db.String(100))
+    uploaded_at = db.Column(db.Date, default=date.today)
 
 
 class Pago(db.Model):

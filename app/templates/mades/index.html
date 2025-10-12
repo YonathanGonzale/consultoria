@@ -6,20 +6,22 @@
     <thead>
       <tr>
         <th>Cliente</th>
-        <th>Año</th>
-        <th>Tipo de trámite</th>
+        <th>Proyecto</th>
+        <th>Subtipo</th>
         <th>Estado</th>
-        <th>Plazo límite</th>
+        <th>Año</th>
+        <th>Vencimiento licencia</th>
       </tr>
     </thead>
     <tbody>
       {% for p in proyectos %}
       <tr>
         <td>{{ p.cliente.nombre_razon_social }}</td>
+        <td>{{ p.nombre_proyecto or '-' }}</td>
+        <td>{{ p.subtipo or '-' }}</td>
+        <td>{{ (p.estado.value if p.estado else 'pendiente').replace('_', ' ')|title }}</td>
         <td>{{ p.anho }}</td>
-        <td>{{ p.tipo_tramite }}</td>
-        <td>{{ p.estado }}</td>
-        <td>{{ p.plazo_limite or "-" }}</td>
+        <td>{{ p.fecha_vencimiento_licencia.year if p.fecha_vencimiento_licencia else '-' }}</td>
       </tr>
       {% endfor %}
     </tbody>

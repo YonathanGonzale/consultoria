@@ -1,27 +1,85 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="mb-3">
-  <h5 class="mb-0">{{ cliente.nombre_razon_social }} - {{ institucion }}</h5>
-  <div class="text-muted small">
-    Año {{ ano }}
-    {% if tipo_prefill %} - Tipo: {{ tipo_prefill }}{% endif %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h5 class="mb-0">{{ cliente.nombre_razon_social }} · {{ institucion }}</h5>
+    <div class="text-muted small">
+      Año {{ ano }}{% if tipo_prefill %} · Filtrado por subtipo: {{ tipo_prefill }}{% endif %}
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('proyectos.nuevo') }}?id_cliente={{ cliente.id_cliente }}&institucion={{ institucion }}&ano={{ ano }}{% if tipo_prefill %}&subtipo={{ tipo_prefill }}{% endif %}" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Nuevo proyecto
+    </a>
+    <a href="{{ url_for('proyectos.index') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-list-task"></i> Lista completa
+    </a>
   </div>
 </div>
 
 <div class="row g-3">
   {% for estado, items in cols.items() %}
-  <div class="col-md-3">
+  <div class="col-lg-4">
     <div class="card h-100">
-      <div class="card-header text-capitalize fw-semibold">{{ estado }}</div>
+      <div class="card-header bg-white fw-semibold">
+        {{ estado_labels[estado]|default(estado.replace('_',' ')|title) }}
+      </div>
       <div class="card-body min-vh-50" id="col-{{ estado }}" data-estado="{{ estado }}">
-        {% for p in items %}
-        <div class="border rounded p-2 mb-2 bg-light" data-id="{{ p.id_proyecto }}">
-          <div class="d-flex justify-content-between small">
-            <div class="text-muted">Año {{ p.anho }} • {{ p.tipo_tramite or '-' }}</div>
-            <a class="text-decoration-none" href="{{ url_for('proyectos.editar', id_proyecto=p.id_proyecto) }}">Editar</a>
+        {% for item in items %}
+        {% set proyecto = item.project %}
+        {% set hero_doc = item.hero_doc %}
+        <div class="project-card d-flex flex-column border rounded-3 mb-3" data-id="{{ proyecto.id_proyecto }}">
+          <div class="project-thumb">
+            {% if hero_doc %}
+            <img src="{{ url_for('proyectos.ver_doc', id_doc=hero_doc.id_documento) }}" alt="Mapa del proyecto">
+            {% else %}
+            <div class="project-thumb placeholder d-flex flex-column justify-content-center align-items-center text-muted">
+              <i class="bi bi-image fs-3"></i>
+              <small>Sin mapa</small>
+            </div>
+            {% endif %}
           </div>
-          <div class="small">Propiedad: {{ p.propiedad.finca if p.propiedad else '-' }}</div>
-          <div class="small">Plazo: {{ p.plazo_limite or '-' }}</div>
+          <div class="project-body p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <div class="fw-semibold">{{ proyecto.nombre_proyecto or 'Proyecto sin título' }}</div>
+                <div class="text-muted small">{{ proyecto.subtipo or '-' }} · Año {{ proyecto.anho or '—' }}</div>
+              </div>
+              <div class="btn-group btn-group-sm">
+                <a class="btn btn-outline-secondary" href="{{ url_for('proyectos.vista', id_proyecto=proyecto.id_proyecto, inst=institucion, ano=ano, tipo=tipo_prefill) }}" title="Ver detalles">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a class="btn btn-outline-primary" href="{{ url_for('proyectos.editar', id_proyecto=proyecto.id_proyecto) }}" title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              </div>
+            </div>
+            <div class="project-flags mb-2">
+              {% for flag in item.doc_flags %}
+              <span class="badge doc-flag {% if flag.available %}active{% endif %}">
+                <i class="bi {{ flag.icon }}"></i> {{ flag.label }}
+              </span>
+              {% endfor %}
+            </div>
+            {% set timeline = item.timeline %}
+            <div class="timeline-box mb-2">
+              {% if timeline.percent is not none %}
+              <div class="timeline-meter">
+                <div class="fill {{ timeline.status }}" style="width: {{ '%.0f'|format(timeline.percent) }}%;"></div>
+              </div>
+              {% endif %}
+              <div class="d-flex justify-content-between small text-muted">
+                <span>Emitida: {{ timeline.emission_text }}</span>
+                <span>{{ timeline.due_text }}</span>
+              </div>
+            </div>
+            <ul class="project-meta list-unstyled small mb-0">
+              <li><span class="text-muted">Lugar:</span> {{ proyecto.lugar or '—' }}</li>
+              <li><span class="text-muted">Distrito:</span> {{ proyecto.distrito or '—' }}</li>
+              <li><span class="text-muted">Departamento:</span> {{ proyecto.departamento or '—' }}</li>
+              <li><span class="text-muted">Superficie:</span> {{ '{:,.2f}'.format(proyecto.superficie) ~ ' ha' if proyecto.superficie is not none else '—' }}</li>
+            </ul>
+          </div>
         </div>
         {% else %}
         <div class="text-muted small">Sin proyectos</div>
@@ -32,71 +90,9 @@
   {% endfor %}
 </div>
 
-<!-- Modal Nuevo Proyecto -->
-<div class="modal fade" id="modalNuevo" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="post" action="{{ url_for('proyectos.crear_quick') }}" enctype="multipart/form-data">
-        <div class="modal-header"><h5 class="modal-title">Nuevo Proyecto</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" name="id_cliente" value="{{ cliente.id_cliente }}">
-          <input type="hidden" name="institucion" value="{{ institucion }}">
-          <div class="mb-2">
-            <label class="form-label">Año</label>
-            <input type="number" class="form-control" name="anho" placeholder="{{ now().year if false else '' }}">
-          </div>
-          <div class="mb-2">
-            <label class="form-label">Tipo de trámite</label>
-            <input class="form-control" name="tipo_tramite" value="{{ tipo_prefill or '' }}">
-          </div>
-          <div class="mb-2">
-            <label class="form-label">Estado</label>
-            <select class="form-select" name="estado">
-              <option>pendiente</option>
-              <option>en proceso</option>
-              <option>entregado</option>
-              <option>finalizado</option>
-            </select>
-          </div>
-          <div class="mb-2">
-            <label class="form-label">Propiedad</label>
-            <select class="form-select" name="id_propiedad">
-              <option value="">Sin propiedad</option>
-              {% for pr in propiedades %}
-              <option value="{{ pr.id_propiedad }}">{{ pr.finca }} - {{ pr.departamento }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="row g-2">
-            <div class="col">
-              <label class="form-label">Firma de contrato</label>
-              <input type="date" class="form-control" name="fecha_firma_contrato">
-            </div>
-            <div class="col">
-              <label class="form-label">Plazo límite</label>
-              <input type="date" class="form-control" name="plazo_limite">
-            </div>
-          </div>
-          <div class="mt-3">
-            <label class="form-label">Documentación anexa (opcional)</label>
-            <input type="file" class="form-control" name="anexo" accept=".jpg,.jpeg,.png,.gif,.pdf,.webp,image/*">
-            <div class="form-text">Podés adjuntar imágenes (JPG/PNG) o PDF como contrato, notas firmadas, mapas, etc.</div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-primary">Crear</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
-  // Inicializa Sortable en cada columna
-  document.querySelectorAll('[id^="col-"]').forEach(col => {
+  document.querySelectorAll('[id^="col-"]').forEach((col) => {
     new Sortable(col, {
       group: 'proyectos',
       animation: 150,
@@ -111,12 +107,92 @@
             body: JSON.stringify({ estado })
           });
           if (!res.ok) throw new Error('Error al actualizar');
-        } catch (e) {
+        } catch (error) {
           alert('No se pudo actualizar el estado');
-          evt.from.appendChild(card); // revertir
+          evt.from.appendChild(card);
         }
       }
     });
   });
 </script>
+
+<style>
+.project-card {
+  background-color: #fff;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.project-thumb {
+  width: 100%;
+  height: 160px;
+  background: #f5f7fa;
+}
+
+.project-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.project-thumb.placeholder {
+  height: 160px;
+}
+
+.project-meta li {
+  margin-bottom: .2rem;
+}
+
+.project-meta li span {
+  font-weight: 600;
+}
+
+.project-flags .doc-flag {
+  background: #f1f3f5;
+  color: #6c757d;
+  font-weight: 500;
+  margin-right: .35rem;
+}
+
+.project-flags .doc-flag.active {
+  background: #0d6efd1a;
+  color: #0d6efd;
+}
+
+.timeline-box {
+  border: 1px solid #edf1f5;
+  border-radius: .75rem;
+  padding: .6rem .8rem;
+  background: #f8fafc;
+}
+
+.timeline-meter {
+  background: #e9eef5;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: .35rem;
+}
+
+.timeline-meter .fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.timeline-meter .fill.danger {
+  background: linear-gradient(90deg, #ff6b6b, #fa5252);
+}
+
+.timeline-meter .fill.warning {
+  background: linear-gradient(90deg, #ffd43b, #ffa94d);
+}
+
+.timeline-meter .fill.success {
+  background: linear-gradient(90deg, #63e6be, #38d9a9);
+}
+
+.timeline-meter .fill.neutral {
+  background: linear-gradient(90deg, #adb5bd, #868e96);
+}
+</style>
 {% endblock %}

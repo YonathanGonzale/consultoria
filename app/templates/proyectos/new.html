@@ -1,127 +1,286 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="row">
-  <div class="col-md-8">
-    <h4>Nuevo Proyecto</h4>
-    
-    <form method="POST" enctype="multipart/form-data">
-      <div class="row g-3">
-        <!-- Cliente -->
-        <div class="col-md-6">
-          <label class="form-label">Cliente *</label>
-          <select name="id_cliente" id="id_cliente" class="form-select" required>
-            <option value="">Seleccionar cliente...</option>
-            {% for cliente in clientes %}
-            <option value="{{ cliente.id_cliente }}">{{ cliente.nombre_razon_social }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <!-- Institución -->
-        <div class="col-md-6">
-          <label class="form-label">Institución *</label>
-          <select name="institucion" class="form-select" required>
-            <option value="">Seleccionar institución...</option>
-            <option value="MADES">MADES</option>
-            <option value="INFONA">INFONA</option>
-            <option value="SENAVE">SENAVE</option>
-            <option value="Otros">Otros</option>
-          </select>
-        </div>
-
-        <!-- Año -->
-        <div class="col-md-4">
-          <label class="form-label">Año</label>
-          <input type="number" name="anho" class="form-control" value="{{ anho_actual }}" min="2020" max="2035">
-        </div>
-
-        <!-- Tipo de Trámite -->
-        <div class="col-md-8">
-          <label class="form-label">Tipo de Trámite *</label>
-          <select name="tipo_tramite" class="form-select" required>
-            <option value="">Seleccionar tipo...</option>
-            <option value="EIA">EIA</option>
-            <option value="Auditoría">Auditoría</option>
-            <option value="Informe técnico">Informe técnico</option>
-            <option value="Registro de silo">Registro de silo</option>
-            <option value="Otros">Otros</option>
-          </select>
-        </div>
-
-        <!-- Estado -->
-        <div class="col-md-6">
-          <label class="form-label">Estado</label>
-          <select name="estado" class="form-select">
-            <option value="pendiente" selected>Pendiente</option>
-            <option value="en proceso">En Proceso</option>
-            <option value="entregado">Entregado</option>
-            <option value="finalizado">Finalizado</option>
-          </select>
-        </div>
-
-        <!-- Propiedad -->
-        <div class="col-md-6">
-          <label class="form-label">Propiedad (Opcional)</label>
-          <select name="id_propiedad" id="id_propiedad" class="form-select">
-            <option value="">Seleccionar propiedad...</option>
-          </select>
-          <small class="form-text text-muted">Seleccione primero un cliente para ver sus propiedades</small>
-        </div>
-
-        <!-- Fecha Firma Contrato -->
-        <div class="col-md-6">
-          <label class="form-label">Fecha Firma Contrato</label>
-          <input type="date" name="fecha_firma_contrato" class="form-control">
-        </div>
-
-        <!-- Plazo Límite -->
-        <div class="col-md-6">
-          <label class="form-label">Plazo Límite</label>
-          <input type="date" name="plazo_limite" class="form-control">
-        </div>
-
-        <!-- Archivo Anexo -->
-        <div class="col-12">
-          <label class="form-label">Archivo Anexo (Opcional)</label>
-          <input type="file" name="anexo" class="form-control" accept=".jpg,.jpeg,.png,.gif,.pdf,.webp">
-          <small class="form-text text-muted">Formatos permitidos: JPG, PNG, GIF, PDF, WEBP</small>
-        </div>
-
-        <!-- Botones -->
-        <div class="col-12">
-          <button type="submit" class="btn btn-primary">Crear Proyecto</button>
-          <a href="{{ url_for('proyectos.index') }}" class="btn btn-secondary ms-2">Cancelar</a>
-        </div>
-      </div>
-    </form>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1">Nuevo Proyecto</h4>
+    <p class="text-muted small mb-0">Registra el proyecto completo para habilitar seguimiento financiero, documental y por módulos.</p>
   </div>
+  <a href="{{ url_for('proyectos.index') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Volver
+  </a>
 </div>
 
+<form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Datos generales</h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Cliente *</label>
+              <select name="id_cliente" id="id_cliente" class="form-select" required>
+                <option value="">Seleccionar cliente…</option>
+                {% for cliente in clientes %}
+                <option value="{{ cliente.id_cliente }}">{{ cliente.nombre_razon_social }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Institución *</label>
+              <select name="institucion" id="institucion" class="form-select" required>
+                <option value="">Seleccionar institución…</option>
+                {% for modulo, opciones in module_subtipos|dictsort %}
+                <option value="{{ modulo }}">{{ modulo }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Subtipo *</label>
+              <select name="subtipo" id="subtipo" class="form-select" required>
+                <option value="">Seleccionar subtipo…</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nombre del proyecto *</label>
+              <input type="text" class="form-control" name="nombre_proyecto" placeholder="Descripción o referencia del proyecto" required>
+              <div class="form-text">Ej.: EIA Planta Agroindustrial Curuguaty.</div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Estado</label>
+              <select name="estado" class="form-select">
+                {% for estado in estados %}
+                  <option value="{{ estado.value }}" {% if loop.first %}selected{% endif %}>{{ estado.value.replace('_',' ')|title }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Año</label>
+              <input type="number" class="form-control" name="anho" value="{{ anho_actual }}" min="2000" max="2100">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Cronograma y licencias</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">EXP SIAM</label>
+              <input type="text" class="form-control" name="exp_siam" placeholder="Código en SIAM">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha de emisión de licencia</label>
+              <input type="date" class="form-control" name="fecha_emision_licencia" value="{{ current_date or '' }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha de vencimiento de licencia <span class="text-muted">(opcional)</span></label>
+              <input type="date" class="form-control" name="fecha_vencimiento_licencia">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Finanzas</h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Costo total</label>
+              <div class="input-group">
+                <span class="input-group-text">Gs.</span>
+                <input type="number" step="0.01" min="0" class="form-control" name="costo_total" id="costo_total">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">% entregado</label>
+              <div class="input-group">
+                <input type="number" step="0.01" min="0" max="100" class="form-control" name="porcentaje_entrega" id="porcentaje_entrega">
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-muted small">Monto entregado (auto)</label>
+              <div class="form-control-plaintext fw-semibold" id="monto_entregado_preview">Gs. 0</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small">Saldo restante (auto)</label>
+              <div class="form-control-plaintext fw-semibold" id="saldo_restante_preview">Gs. 0</div>
+            </div>
+          </div>
+          <div class="alert alert-light border mt-3 mb-0">
+            Los valores se recalculan automáticamente en el guardado según costo total y porcentaje entregado.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Ubicación y predio</h6>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label">Departamento</label>
+              <input type="text" class="form-control" name="departamento">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Distrito</label>
+              <input type="text" class="form-control" name="distrito">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Lugar / Barrio</label>
+              <input type="text" class="form-control" name="lugar">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Finca</label>
+              <input type="text" class="form-control" name="finca">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Matrícula</label>
+              <input type="text" class="form-control" name="matricula">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Padrón</label>
+              <input type="text" class="form-control" name="padron">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Lote</label>
+              <input type="text" class="form-control" name="lote">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Manzana</label>
+              <input type="text" class="form-control" name="manzana">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Fracción</label>
+              <input type="text" class="form-control" name="fraccion">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Superficie (ha)</label>
+              <input type="number" step="0.01" min="0" class="form-control" name="superficie">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Documentación</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Mapa / plano de ubicación</label>
+              <input type="file" class="form-control" name="mapa" accept=".pdf,.jpg,.jpeg,.png,.webp">
+              <div class="form-text">Adjunta un mapa, croquis o plano del proyecto.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Factura o comprobante</label>
+              <input type="file" class="form-control" name="factura" accept=".pdf,.jpg,.jpeg,.png,.webp">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Documentos adicionales</label>
+              <input type="file" class="form-control" name="documentos" multiple
+                     accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xlsx,.zip,.rar,.shp">
+              <div class="form-text">Podés cargar informes, contratos, imágenes u otros anexos relevantes.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end gap-2 mt-4">
+    <a href="{{ url_for('proyectos.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+    <button type="submit" class="btn btn-primary">Guardar proyecto</button>
+  </div>
+</form>
+
 <script>
-// Cargar propiedades por cliente usando la API
-document.addEventListener('DOMContentLoaded', function() {
-    const clienteSelect = document.getElementById('id_cliente');
-    const propiedadSelect = document.getElementById('id_propiedad');
-    
-    clienteSelect.addEventListener('change', function() {
-        const clienteId = this.value;
-        propiedadSelect.innerHTML = '<option value="">Seleccionar propiedad...</option>';
-        if (clienteId) {
-            fetch(`/proyectos/api/cliente/${clienteId}/propiedades`)
-                .then(response => response.json())
-                .then(propiedades => {
-                    propiedades.forEach(prop => {
-                        const option = document.createElement('option');
-                        option.value = prop.id_propiedad;
-                        option.textContent = `${prop.finca} - Padrón: ${prop.padron || 'N/A'}`;
-                        propiedadSelect.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error cargando propiedades:', error);
-                });
-        }
+  const moduleSubtipos = {{ module_subtipos|tojson }};
+
+  function actualizarSubtipos(moduloSeleccionado, valorActual) {
+    const subtipoSelect = document.getElementById('subtipo');
+    subtipoSelect.innerHTML = '<option value="">Seleccionar subtipo…</option>';
+    const opciones = moduleSubtipos[moduloSeleccionado] || [];
+    let selectedFound = false;
+    opciones.forEach(([valor, titulo]) => {
+      const opt = document.createElement('option');
+      opt.value = valor;
+      opt.textContent = titulo;
+      if (valorActual && valor === valorActual) {
+        opt.selected = true;
+        selectedFound = true;
+      }
+      subtipoSelect.appendChild(opt);
     });
-});
+    if (valorActual && !selectedFound) {
+      const opt = document.createElement('option');
+      opt.value = valorActual;
+      opt.textContent = valorActual;
+      opt.selected = true;
+      subtipoSelect.appendChild(opt);
+    }
+  }
+
+  function formatoMoneda(valor) {
+    if (!valor || isNaN(valor)) return 'Gs. 0';
+    const number = Number(valor);
+    return 'Gs. ' + number.toLocaleString('es-PY', { minimumFractionDigits: 0 });
+  }
+
+  function recalcularFinanzas() {
+    const costo = parseFloat(document.getElementById('costo_total').value) || 0;
+    const porcentaje = parseFloat(document.getElementById('porcentaje_entrega').value) || 0;
+    const montoEntregado = (costo * porcentaje) / 100;
+    const saldoRestante = costo - montoEntregado;
+    document.getElementById('monto_entregado_preview').textContent = formatoMoneda(montoEntregado);
+    document.getElementById('saldo_restante_preview').textContent = formatoMoneda(saldoRestante);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const institucionSelect = document.getElementById('institucion');
+    const clienteSelect = document.getElementById('id_cliente');
+    const emisionInput = document.querySelector('input[name="fecha_emision_licencia"]');
+
+    institucionSelect.addEventListener('change', (event) => {
+      actualizarSubtipos(event.target.value);
+    });
+
+    document.getElementById('costo_total').addEventListener('input', recalcularFinanzas);
+    document.getElementById('porcentaje_entrega').addEventListener('input', recalcularFinanzas);
+
+    const params = new URLSearchParams(window.location.search);
+    const preCliente = params.get('id_cliente');
+    const preInstitucion = params.get('institucion');
+    const preSubtipo = params.get('subtipo');
+    const preAnho = params.get('ano');
+
+    if (preCliente) {
+      clienteSelect.value = preCliente;
+    }
+    if (preInstitucion) {
+      institucionSelect.value = preInstitucion;
+      actualizarSubtipos(preInstitucion, preSubtipo);
+    } else {
+      actualizarSubtipos(institucionSelect.value, preSubtipo);
+    }
+    if (preAnho) {
+      const anhoInput = document.querySelector('input[name="anho"]');
+      if (anhoInput) anhoInput.value = preAnho;
+      if (emisionInput && !emisionInput.value) {
+        const year = String(preAnho).padStart(4, '0');
+        emisionInput.value = `${year}-01-01`;
+      }
+    }
+
+    recalcularFinanzas();
+  });
 </script>
 {% endblock %}
