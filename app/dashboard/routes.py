@@ -3,24 +3,27 @@ from flask_login import login_required
 from ..models import Cliente, Proyecto
 from ..extensions import db
 from datetime import date
-
 bp = Blueprint('dashboard', __name__)
 
 @bp.route('/')
 @login_required
 def index():
     total_clientes = db.session.query(Cliente).count()
-    proximos_proyectos = (
+    hoy = date.today()
+    proyectos = (
         db.session.query(Proyecto)
         .filter(Proyecto.fecha_vencimiento_licencia.isnot(None))
-        .order_by(Proyecto.fecha_vencimiento_licencia.asc())
-        .limit(10)
         .all()
     )
 
-    hoy = date.today()
+    def _orden_proximidad(proyecto):
+        dias = (proyecto.fecha_vencimiento_licencia - hoy).days
+        if dias < 0:
+            return (0, dias, proyecto.fecha_vencimiento_licencia)
+        return (1, dias, proyecto.fecha_vencimiento_licencia)
+
     proximos_items = []
-    for proyecto in proximos_proyectos:
+    for proyecto in sorted(proyectos, key=_orden_proximidad):
         dias_restantes = (proyecto.fecha_vencimiento_licencia - hoy).days
         if dias_restantes <= 30:
             badge_class = 'bg-danger'

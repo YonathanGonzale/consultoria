@@ -239,10 +239,12 @@
       <div class="card">
         <div class="card-body">
           <h6 class="text-uppercase text-muted fw-semibold mb-3">Documentos existentes</h6>
+          {% set delete_forms = namespace(items=[]) %}
           {% if documentos %}
           <div class="row g-3">
             {% for doc in documentos %}
             {% if doc.categoria not in ['mapa', 'factura'] %}
+            {% set _ = delete_forms.items.append((doc.id_documento, url_for('proyectos.eliminar_doc', id_doc=doc.id_documento))) %}
             <div class="col-md-4 col-lg-3">
               <div class="card h-100 shadow-sm">
                 <div class="card-body p-3 d-flex flex-column">
@@ -252,11 +254,17 @@
                       <a href="{{ url_for('proyectos.descargar_doc', id_doc=doc.id_documento) }}" class="btn btn-outline-primary" title="Descargar">
                         <i class="bi bi-download"></i>
                       </a>
-                      <form method="POST" action="{{ url_for('proyectos.eliminar_doc', id_doc=doc.id_documento) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este documento?');">
-                        <button type="submit" class="btn btn-outline-danger" title="Eliminar">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      </form>
+                      <button
+                        type="submit"
+                        class="btn btn-outline-danger"
+                        title="Eliminar"
+                        form="delete-doc-{{ doc.id_documento }}"
+                        formmethod="POST"
+                        formnovalidate
+                        onclick="return confirm('¿Eliminar este documento?');"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
                     </div>
                   </div>
                   <div class="small text-muted mb-2">{{ doc.nombre_original or 'Archivo adjunto' }}</div>
@@ -292,6 +300,10 @@
     <button type="submit" class="btn btn-primary">Guardar cambios</button>
   </div>
 </form>
+
+{% for doc_id, action in delete_forms.items %}
+<form id="delete-doc-{{ doc_id }}" method="POST" action="{{ action }}" class="d-none"></form>
+{% endfor %}
 
 <script>
   const moduleSubtipos = {{ module_subtipos|tojson }};
