@@ -1,4 +1,13 @@
 {% extends 'base.html' %}
+{% block extra_head %}
+  {{ super() }}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+{% endblock %}
+{% block extra_scripts %}
+  {{ super() }}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="{{ url_for('static', filename='js/client-map.js') }}"></script>
+{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <div>
@@ -44,10 +53,29 @@
                 <i class="bi bi-geo-alt"></i> Abrir mapa
               </a>
             {% else %}
-              —
+              -
             {% endif %}
           </dd>
         </dl>
+        {% if cliente.ubicacion_gps %}
+        <hr>
+        <div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-uppercase text-muted small fw-semibold">Vista previa</span>
+            <span class="text-muted small" id="cliente-map-view-coords">—</span>
+          </div>
+          <div
+            id="cliente-map"
+            class="client-map-container"
+            data-client-map="true"
+            data-editable="false"
+            data-initial-link="{{ cliente.ubicacion_gps|e }}"
+            data-default-lat="-25.2867"
+            data-default-lng="-57.6459"
+            data-coord-target="#cliente-map-view-coords"
+          ></div>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>

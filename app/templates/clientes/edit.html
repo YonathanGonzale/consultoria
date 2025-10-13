@@ -1,4 +1,13 @@
 {% extends 'base.html' %}
+{% block extra_head %}
+  {{ super() }}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+{% endblock %}
+{% block extra_scripts %}
+  {{ super() }}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="{{ url_for('static', filename='js/client-map.js') }}"></script>
+{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <div>
@@ -71,6 +80,50 @@
               <label class="form-label">Ubicación GPS / Google Maps</label>
               <input class="form-control" name="ubicacion_gps" value="{{ cliente.ubicacion_gps or '' }}">
               <div class="form-text">Pegá un enlace directo o coordenadas para localizar rápidamente el sitio.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label d-flex justify-content-between align-items-center">
+                Ajusta la ubicación en el mapa
+                <span class="text-muted small" id="cliente-map-coords">—</span>
+              </label>
+              <div class="client-map-wrapper">
+                <div class="client-map-overlay">
+                  <div class="client-map-search-card">
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text bg-transparent border-end-0">
+                        <i class="bi bi-search text-secondary"></i>
+                      </span>
+                      <input
+                        type="text"
+                        class="form-control border-start-0"
+                        id="cliente-map-search"
+                        placeholder="Buscar dirección, ciudad o referencia"
+                        autocomplete="off"
+                        value=""
+                      >
+                      <button type="button" class="btn btn-outline-primary" id="cliente-map-search-btn">
+                        Buscar
+                      </button>
+                    </div>
+                    <div class="client-map-search-results list-group mt-2" id="cliente-map-search-results" hidden></div>
+                  </div>
+                </div>
+                <div
+                  id="cliente-map"
+                  class="client-map-container"
+                  data-client-map="true"
+                  data-editable="true"
+                  data-link-target="[name='ubicacion_gps']"
+                  data-coord-target="#cliente-map-coords"
+                  data-default-lat="-25.2867"
+                  data-default-lng="-57.6459"
+                  data-initial-link="{{ (cliente.ubicacion_gps or '')|e }}"
+                  data-search-input="#cliente-map-search"
+                  data-search-button="#cliente-map-search-btn"
+                  data-search-results="#cliente-map-search-results"
+                ></div>
+              </div>
+              <div class="form-text mt-2">Puedes mover el marcador o pegar nuevas coordenadas y haremos el resto.</div>
             </div>
           </div>
         </div>

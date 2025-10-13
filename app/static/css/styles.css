@@ -360,6 +360,45 @@ body {
     opacity: 0.95;
 }
 
+.client-map-container {
+    height: 320px;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.client-map-wrapper {
+    position: relative;
+}
+
+.client-map-overlay {
+    position: absolute;
+    top: 0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(90%, 360px);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.client-map-search-card {
+    background: rgba(255, 255, 255, 0.94);
+    border-radius: 0.75rem;
+    box-shadow: 0 6px 18px rgba(33, 37, 41, 0.18);
+    padding: 0.65rem;
+    pointer-events: auto;
+}
+
+.client-map-search-results {
+    max-height: 220px;
+    overflow-y: auto;
+    border-radius: 0.65rem;
+}
+
+.client-map-search-results .list-group-item {
+    font-size: 0.9rem;
+}
+
 
 
 
