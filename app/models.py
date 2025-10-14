@@ -10,7 +10,6 @@ class Cliente(db.Model):
     id_cliente = db.Column(db.Integer, primary_key=True)
     nombre_razon_social = db.Column(db.String(255))
     cedula_identidad = db.Column(db.String(100))
-    contacto = db.Column(db.String(255))
     telefono = db.Column(db.String(100))
     correo_electronico = db.Column(db.String(255))
     departamento = db.Column(db.String(150))

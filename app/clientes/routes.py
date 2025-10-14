@@ -142,7 +142,6 @@ def nuevo_cliente():
         c = Cliente(
             nombre_razon_social=request.form.get('nombre'),
             cedula_identidad=_optional(request.form, 'cedula'),
-            contacto=_optional(request.form, 'contacto'),
             telefono=_optional(request.form, 'telefono'),
             correo_electronico=_optional(request.form, 'correo'),
             departamento=_optional(request.form, 'departamento'),
@@ -173,7 +172,6 @@ def editar_cliente(id_cliente):
 
         cliente.nombre_razon_social = nombre
         cliente.cedula_identidad = _optional(request.form, 'cedula')
-        cliente.contacto = _optional(request.form, 'contacto')
         cliente.telefono = _optional(request.form, 'telefono')
         cliente.correo_electronico = _optional(request.form, 'correo')
         cliente.departamento = _optional(request.form, 'departamento')

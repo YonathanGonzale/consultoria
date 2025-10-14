@@ -24,7 +24,6 @@
       <tr>
         <th>Nombre / Razón social</th>
         <th>Cédula / RUC</th>
-        <th>Contacto</th>
         <th>Correo</th>
         <th>Teléfono</th>
         <th>Departamento</th>
@@ -40,10 +39,9 @@
           </a>
         </td>
         <td>{{ c.cedula_identidad or '—' }}</td>
-        <td>{{ c.contacto or '—' }}</td>
-        <td>{{ c.correo_electronico or '—' }}</td>
-        <td>{{ c.telefono or '—' }}</td>
-        <td>{{ c.departamento or '—' }}</td>
+        <td>{{ c.correo_electronico or '-' }}</td>
+        <td>{{ c.telefono or '-' }}</td>
+        <td>{{ c.departamento or '-' }}</td>
         <td class="text-end">
           <div class="btn-group btn-group-sm">
             <a class="btn btn-outline-primary" href="{{ url_for('clientes.detalle_cliente', id_cliente=c.id_cliente) }}" title="Ver ficha">
@@ -60,7 +58,7 @@
       </tr>
       {% else %}
       <tr>
-        <td colspan="7" class="text-center text-muted py-4">
+        <td colspan="6" class="text-center text-muted py-4">
           <i class="bi bi-people"></i> No se encontraron clientes con el criterio buscado.
         </td>
       </tr>
