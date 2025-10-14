@@ -198,7 +198,7 @@
           {% endfor %}
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label">Mapa / plano de ubicación</label>
+              <label class="form-label">Mapa de ubicación de referencia</label>
               {% if docs_ns.mapa %}
               <div class="d-flex align-items-center gap-2 mb-2">
                 <a class="btn btn-sm btn-outline-primary" href="{{ url_for('proyectos.descargar_doc', id_doc=docs_ns.mapa.id_documento) }}" title="Descargar mapa">
@@ -225,10 +225,10 @@
               <div class="form-text">Al adjuntar una nueva factura se sobrescribe la anterior.</div>
             </div>
             <div class="col-12">
-              <label class="form-label">Agregar documentos adicionales</label>
+              <label class="form-label">Agregar notas y shapefile/mapas</label>
               <input type="file" class="form-control" name="documentos" multiple
                      accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xlsx,.zip,.rar,.shp">
-              <div class="form-text">Podés cargar informes, contratos u otros anexos relevantes.</div>
+                <div class="form-text">Podés cargar notas, shapefiles, imágenes u otros anexos relevantes.</div>
             </div>
           </div>
         </div>

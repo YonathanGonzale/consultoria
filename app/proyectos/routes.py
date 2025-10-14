@@ -321,9 +321,9 @@ def _prepare_document_groups(documentos):
     hero_doc = _select_hero_doc(classification)
 
     group_specs = [
-        ('Mapas', classification['mapas']),
-        ('Imágenes', classification['imagenes']),
-        ('Documentos PDF', classification['pdfs']),
+        ('Mapa de ubicación/referencia', classification['mapas']),
+        ('Mapas del proyecto PNG', classification['imagenes']),
+        ('Notas y documentaciones PDF', classification['pdfs']),
         ('Facturas / comprobantes', classification['facturas']),
         ('Otros archivos', classification['otros']),
     ]
