@@ -522,6 +522,18 @@ def board(id_cliente, ano, inst):
             subtipo=tipo_prefill,
         )
 
+    cliente_url = url_for('clientes.modulos', id_cliente=id_cliente)
+    institucion_url = url_for('clientes.modulo_subtipos', id_cliente=id_cliente, inst=inst)
+    subtipo_url = None
+    if tipo_prefill:
+        subtipo_url = url_for(
+            'clientes.modulo_subtipo_anhos',
+            id_cliente=id_cliente,
+            inst=inst,
+            subtipo=tipo_prefill,
+        )
+    ano_url = subtipo_url or institucion_url
+
     return render_template(
         'proyectos/board.html',
         cliente=cliente,
@@ -534,6 +546,10 @@ def board(id_cliente, ano, inst):
         estados=ESTADOS_LIST,
         estado_column_span=lg_span,
         back_periods_url=back_periods_url,
+        cliente_url=cliente_url,
+        institucion_url=institucion_url,
+        subtipo_url=subtipo_url,
+        ano_url=ano_url,
     )
 
 
