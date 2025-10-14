@@ -225,6 +225,18 @@ def descargar_documento_cliente(id_cliente, id_doc):
     return send_file(doc.archivo_url, as_attachment=True, download_name=doc.nombre_original or 'documento')
 
 
+@bp.route('/<int:id_cliente>/documento/<int:id_doc>/ver')
+@login_required
+def ver_documento_cliente(id_cliente, id_doc):
+    doc = DocumentoCliente.query.get_or_404(id_doc)
+    if doc.id_cliente != id_cliente:
+        abort(404)
+    if not doc.archivo_url or not os.path.exists(doc.archivo_url):
+        flash('Archivo no encontrado', 'danger')
+        return redirect(url_for('clientes.detalle_cliente', id_cliente=id_cliente))
+    return send_file(doc.archivo_url, as_attachment=False, download_name=doc.nombre_original or 'documento')
+
+
 @bp.route('/<int:id_cliente>/documento/<int:id_doc>/eliminar', methods=['POST'])
 @login_required
 def eliminar_documento_cliente(id_cliente, id_doc):

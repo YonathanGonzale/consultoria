@@ -116,9 +116,12 @@
               {% for doc in cliente.documentos %}
               <tr>
                 <td>{{ doc.nombre_original or 'Documento' }}</td>
-                <td>{{ doc.mime_type or '—' }}</td>
-                <td>{{ doc.uploaded_at.strftime('%d/%m/%Y') if doc.uploaded_at else '—' }}</td>
+                <td>{{ doc.mime_type or '-' }}</td>
+                <td>{{ doc.uploaded_at.strftime('%d/%m/%Y') if doc.uploaded_at else '-' }}</td>
                 <td class="text-end">
+                  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('clientes.ver_documento_cliente', id_cliente=cliente.id_cliente, id_doc=doc.id_documento) }}" target="_blank">
+                    <i class="bi bi-eye"></i>
+                  </a>
                   <a class="btn btn-sm btn-outline-primary" href="{{ url_for('clientes.descargar_documento_cliente', id_cliente=cliente.id_cliente, id_doc=doc.id_documento) }}">
                     <i class="bi bi-download"></i>
                   </a>
