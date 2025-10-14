@@ -9,9 +9,8 @@ from ..models import Cliente, Proyecto, ProyectoEstado
 bp = Blueprint("mades", __name__, url_prefix="/mades")
 
 MADES_ESTADOS = {
-    'pendiente': ProyectoEstado.pendiente,
     'en_proceso': ProyectoEstado.en_proceso,
-    'finalizado': ProyectoEstado.finalizado,
+    'licencia_emitida': ProyectoEstado.licencia_emitida,
 }
 
 MADES_SUBTIPOS = [
@@ -59,7 +58,7 @@ def crear():
 
     anho = int(form.get("anho") or date.today().year)
     subtipo = form.get("subtipo") or form.get("tipo_tramite") or "Otros"
-    estado_raw = (form.get("estado") or "pendiente").strip().lower()
+    estado_raw = (form.get("estado") or "en_proceso").strip().lower()
 
     emision = _parse_date(form.get("fecha_emision_licencia"))
     if not emision:
@@ -73,7 +72,7 @@ def crear():
         subtipo=subtipo,
         nombre_proyecto=form.get("nombre_proyecto") or f"{subtipo} {anho}",
     )
-    proyecto.estado = MADES_ESTADOS.get(estado_raw, ProyectoEstado.pendiente)
+    proyecto.estado = MADES_ESTADOS.get(estado_raw, ProyectoEstado.en_proceso)
     proyecto.anio_inicio = anho
     proyecto.exp_siam = form.get("exp_siam") or None
     proyecto.fecha_emision_licencia = emision

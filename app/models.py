@@ -50,9 +50,8 @@ class Propiedad(db.Model):
 
 
 class ProyectoEstado(enum.Enum):
-    pendiente = 'pendiente'
     en_proceso = 'en_proceso'
-    finalizado = 'finalizado'
+    licencia_emitida = 'licencia_emitida'
 
 
 class Proyecto(db.Model):
@@ -72,7 +71,11 @@ class Proyecto(db.Model):
     monto_entregado = db.Column(db.Numeric(12, 2))
     saldo_restante = db.Column(db.Numeric(12, 2))
     fecha_firma_contrato = db.Column(db.Date)
-    estado = db.Column(db.Enum(ProyectoEstado), nullable=False, default=ProyectoEstado.pendiente)
+    estado = db.Column(
+        db.Enum(ProyectoEstado, name='estado_proyecto_enum'),
+        nullable=False,
+        default=ProyectoEstado.en_proceso,
+    )
     plazo_limite = db.Column(db.Date)
     id_propiedad = db.Column(db.Integer, db.ForeignKey('propiedad.id_propiedad'))
     lugar = db.Column(db.String(255))

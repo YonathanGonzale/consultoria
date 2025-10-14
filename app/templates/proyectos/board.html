@@ -19,7 +19,7 @@
 
 <div class="row g-3">
   {% for estado, items in cols.items() %}
-  <div class="col-lg-4">
+  <div class="col-12 col-md-6 col-lg-{{ estado_column_span }}">
     <div class="card h-100">
       <div class="card-header bg-white fw-semibold">
         {{ estado_labels[estado]|default(estado.replace('_',' ')|title) }}

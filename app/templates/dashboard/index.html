@@ -33,8 +33,8 @@
         <td>{{ p.nombre_proyecto or (p.institucion ~ ' ' ~ (p.anho or '')) }}</td>
         <td>{{ p.subtipo or '-' }}</td>
         <td>
-          {% set estado_val = p.estado.value if p.estado else 'pendiente' %}
-          <span class="badge bg-{% if estado_val == 'finalizado' %}success{% elif estado_val == 'en_proceso' %}warning text-dark{% else %}secondary{% endif %}">
+          {% set estado_val = p.estado.value if p.estado else 'en_proceso' %}
+          <span class="badge bg-{% if estado_val == 'licencia_emitida' %}success{% elif estado_val == 'en_proceso' %}warning text-dark{% else %}secondary{% endif %}">
             {{ estado_val.replace('_', ' ')|title }}
           </span>
         </td>

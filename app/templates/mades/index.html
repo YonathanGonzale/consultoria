@@ -19,7 +19,7 @@
         <td>{{ p.cliente.nombre_razon_social }}</td>
         <td>{{ p.nombre_proyecto or '-' }}</td>
         <td>{{ p.subtipo or '-' }}</td>
-        <td>{{ (p.estado.value if p.estado else 'pendiente').replace('_', ' ')|title }}</td>
+        <td>{{ (p.estado.value if p.estado else 'en_proceso').replace('_', ' ')|title }}</td>
         <td>{{ p.anho }}</td>
         <td>{{ p.fecha_vencimiento_licencia.year if p.fecha_vencimiento_licencia else '-' }}</td>
       </tr>

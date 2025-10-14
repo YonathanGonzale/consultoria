@@ -72,15 +72,13 @@ ALLOWED_DOCUMENT_EXT = {'.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.doc'
 IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
 
 ESTADOS_LIST = [
-    ProyectoEstado.pendiente,
     ProyectoEstado.en_proceso,
-    ProyectoEstado.finalizado,
+    ProyectoEstado.licencia_emitida,
 ]
 ESTADOS_POR_VALOR = {estado.value: estado for estado in ESTADOS_LIST}
 ESTADO_LABELS = {
-    'pendiente': 'Pendiente',
     'en_proceso': 'En proceso',
-    'finalizado': 'Finalizado',
+    'licencia_emitida': 'Licencia emitida',
 }
 
 
@@ -116,9 +114,9 @@ def _parse_date(value):
 
 def _resolve_estado(raw_value):
     if not raw_value:
-        return ProyectoEstado.pendiente
+        return ProyectoEstado.en_proceso
     key = raw_value.strip().lower()
-    return ESTADOS_POR_VALOR.get(key, ProyectoEstado.pendiente)
+    return ESTADOS_POR_VALOR.get(key, ProyectoEstado.en_proceso)
 
 
 def _upload_root():
@@ -498,11 +496,16 @@ def board(id_cliente, ano, inst):
 
     cols = {estado.value: [] for estado in ESTADOS_LIST}
     for proyecto in proyectos:
-        estado_key = proyecto.estado.value if isinstance(proyecto.estado, ProyectoEstado) else (proyecto.estado or 'pendiente')
+        estado_key = proyecto.estado.value if isinstance(proyecto.estado, ProyectoEstado) else (proyecto.estado or 'en_proceso')
         estado_key = estado_key.lower()
         if estado_key == 'entregado':
-            estado_key = ProyectoEstado.finalizado.value
+            estado_key = ProyectoEstado.licencia_emitida.value
         cols.setdefault(estado_key, []).append(_project_card_data(proyecto))
+
+    total_estados = len(cols) or 1
+    lg_span = 12 // total_estados
+    if lg_span < 3:
+        lg_span = 3
 
     return render_template(
         'proyectos/board.html',
@@ -514,6 +517,7 @@ def board(id_cliente, ano, inst):
         tipo_prefill=tipo_prefill,
         module_subtipos=MODULE_SUBTIPOS,
         estados=ESTADOS_LIST,
+        estado_column_span=lg_span,
     )
 
 
