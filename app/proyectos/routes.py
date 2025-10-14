@@ -357,6 +357,8 @@ def index():
 @login_required
 def nuevo():
     clientes = Cliente.query.order_by(Cliente.nombre_razon_social.asc()).all()
+    pre_id_cliente = request.args.get('id_cliente', type=int)
+
     if request.method == 'POST':
         id_cliente = _parse_int(request.form.get('id_cliente'))
         institucion = request.form.get('institucion')
@@ -390,12 +392,17 @@ def nuevo():
             )
         )
 
+    back_instituciones_url = None
+    if pre_id_cliente:
+        back_instituciones_url = url_for('clientes.modulos', id_cliente=pre_id_cliente)
+
     return render_template(
         'proyectos/new.html',
         clientes=clientes,
         anho_actual=date.today().year,
         module_subtipos=MODULE_SUBTIPOS,
         estados=ESTADOS_LIST,
+        back_instituciones_url=back_instituciones_url,
     )
 
 
@@ -506,6 +513,15 @@ def board(id_cliente, ano, inst):
     if lg_span < 3:
         lg_span = 3
 
+    back_periods_url = None
+    if tipo_prefill:
+        back_periods_url = url_for(
+            'clientes.modulo_subtipo_anhos',
+            id_cliente=id_cliente,
+            inst=inst,
+            subtipo=tipo_prefill,
+        )
+
     return render_template(
         'proyectos/board.html',
         cliente=cliente,
@@ -517,6 +533,7 @@ def board(id_cliente, ano, inst):
         module_subtipos=MODULE_SUBTIPOS,
         estados=ESTADOS_LIST,
         estado_column_span=lg_span,
+        back_periods_url=back_periods_url,
     )
 
 
@@ -665,6 +682,22 @@ def editar(id_proyecto):
     proyecto = Proyecto.query.get_or_404(id_proyecto)
     clientes = Cliente.query.order_by(Cliente.nombre_razon_social.asc()).all()
 
+    raw_back_inst = request.args.get('inst')
+    raw_back_ano = request.args.get('ano', type=int)
+    back_tipo = request.args.get('tipo')
+
+    back_inst = raw_back_inst or proyecto.institucion
+    back_ano = raw_back_ano if raw_back_ano is not None else proyecto.anho
+
+    board_params = {
+        'id_cliente': proyecto.id_cliente,
+        'inst': back_inst,
+        'ano': back_ano,
+    }
+    if back_tipo:
+        board_params['tipo'] = back_tipo
+    back_board_url = url_for('proyectos.board', **board_params)
+
     if request.method == 'POST':
         _fill_project_from_form(proyecto, request.form)
         proyecto.estado = _resolve_estado(request.form.get('estado'))
@@ -676,7 +709,7 @@ def editar(id_proyecto):
         db.session.commit()
 
         flash('Proyecto actualizado', 'success')
-        return redirect(url_for('proyectos.editar', id_proyecto=proyecto.id_proyecto))
+        return redirect(back_board_url)
 
     documentos = DocumentoProyecto.query.filter_by(id_proyecto=id_proyecto).order_by(DocumentoProyecto.uploaded_at.desc()).all()
     subtipos = MODULE_SUBTIPOS.get(proyecto.institucion, MADES_SUBTIPOS)
@@ -690,6 +723,7 @@ def editar(id_proyecto):
         estado_labels=ESTADO_LABELS,
         subtipos=subtipos,
         module_subtipos=MODULE_SUBTIPOS,
+        back_board_url=back_board_url,
     )
 
 

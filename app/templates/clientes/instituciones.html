@@ -16,6 +16,9 @@
     </div>
   </div>
   <div class="d-flex flex-wrap gap-2">
+    <a href="{{ url_for('clientes.list_clientes') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Listado de clientes
+    </a>
     {% if cliente.ubicacion_gps %}
     <a href="{{ cliente.ubicacion_gps }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
       <i class="bi bi-geo-alt"></i> Ver mapa

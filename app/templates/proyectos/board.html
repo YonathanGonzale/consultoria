@@ -8,6 +8,11 @@
     </div>
   </div>
   <div class="d-flex gap-2">
+    {% if back_periods_url %}
+    <a href="{{ back_periods_url }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Volver a años
+    </a>
+    {% endif %}
     <a href="{{ url_for('proyectos.nuevo') }}?id_cliente={{ cliente.id_cliente }}&institucion={{ institucion }}&ano={{ ano }}{% if tipo_prefill %}&subtipo={{ tipo_prefill }}{% endif %}" class="btn btn-primary">
       <i class="bi bi-plus-circle"></i> Nuevo proyecto
     </a>
@@ -49,7 +54,7 @@
                 <a class="btn btn-outline-secondary" href="{{ url_for('proyectos.vista', id_proyecto=proyecto.id_proyecto, inst=institucion, ano=ano, tipo=tipo_prefill) }}" title="Ver detalles">
                   <i class="bi bi-eye"></i>
                 </a>
-                <a class="btn btn-outline-primary" href="{{ url_for('proyectos.editar', id_proyecto=proyecto.id_proyecto) }}" title="Editar">
+                <a class="btn btn-outline-primary" href="{{ url_for('proyectos.editar', id_proyecto=proyecto.id_proyecto, inst=institucion, ano=ano, tipo=tipo_prefill) }}" title="Editar">
                   <i class="bi bi-pencil"></i>
                 </a>
               </div>

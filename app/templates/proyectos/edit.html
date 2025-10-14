@@ -5,9 +5,17 @@
     <h4 class="mb-1">Proyecto #{{ p.id_proyecto }}</h4>
     <p class="text-muted small mb-0">{{ p.institucion }} · {{ p.subtipo or 'Sin subtipo' }} · {{ p.nombre_proyecto or 'Sin título' }}</p>
   </div>
-  <a href="{{ url_for('proyectos.board', id_cliente=p.id_cliente, ano=p.anho, inst=p.institucion) }}" class="btn btn-outline-secondary">
-    <i class="bi bi-kanban"></i> Ver tablero
-  </a>
+  <div class="d-flex gap-2">
+    {% if back_board_url %}
+    <a href="{{ back_board_url }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Volver al tablero filtrado
+    </a>
+    {% else %}
+    <a href="{{ url_for('proyectos.board', id_cliente=p.id_cliente, ano=p.anho, inst=p.institucion) }}" class="btn btn-outline-secondary">
+      <i class="bi bi-kanban"></i> Ver tablero
+    </a>
+    {% endif %}
+  </div>
 </div>
 
 <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
@@ -296,7 +304,7 @@
   </div>
 
   <div class="d-flex justify-content-end gap-2 mt-4">
-    <a href="{{ url_for('proyectos.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+    <a href="{{ back_board_url or url_for('proyectos.index') }}" class="btn btn-outline-secondary">Cancelar</a>
     <button type="submit" class="btn btn-primary">Guardar cambios</button>
   </div>
 </form>
