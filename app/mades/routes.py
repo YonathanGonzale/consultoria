@@ -60,8 +60,9 @@ def crear():
     subtipo = form.get("subtipo") or form.get("tipo_tramite") or "Otros"
     estado_raw = (form.get("estado") or "en_proceso").strip().lower()
 
-    emision = _parse_date(form.get("fecha_emision_licencia"))
-    if not emision:
+    raw_emision = form.get("fecha_emision_licencia")
+    emision = _parse_date(raw_emision)
+    if raw_emision and not emision:
         flash("Ingresá una fecha válida de emisión de licencia.", "danger")
         return redirect(request.referrer or url_for("mades.index"))
 

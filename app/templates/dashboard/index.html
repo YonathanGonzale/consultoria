@@ -38,7 +38,7 @@
             {{ estado_val.replace('_', ' ')|title }}
           </span>
         </td>
-        <td>{{ p.fecha_vencimiento_licencia.year if p.fecha_vencimiento_licencia else '-' }}</td>
+        <td>{{ p.fecha_vencimiento_licencia.strftime('%d/%m/%Y') if p.fecha_vencimiento_licencia else '—' }}</td>
         <td>
           <span class="badge {{ item.badge_class }}">
             {% if item.dias_restantes < 0 %}

@@ -396,7 +396,6 @@ def nuevo():
         anho_actual=date.today().year,
         module_subtipos=MODULE_SUBTIPOS,
         estados=ESTADOS_LIST,
-        current_date=date.today().isoformat(),
     )
 
 

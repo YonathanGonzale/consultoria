@@ -73,8 +73,8 @@
               <input type="text" class="form-control" name="exp_siam" placeholder="Código en SIAM">
             </div>
             <div class="col-md-6">
-              <label class="form-label">Fecha de emisión de licencia</label>
-              <input type="date" class="form-control" name="fecha_emision_licencia" value="{{ current_date or '' }}" required>
+              <label class="form-label">Fecha de emisión de licencia <span class="text-muted">(opcional)</span></label>
+              <input type="date" class="form-control" name="fecha_emision_licencia" value="{{ request.form.get('fecha_emision_licencia', '') }}">
             </div>
             <div class="col-md-6">
               <label class="form-label">Fecha de vencimiento de licencia <span class="text-muted">(opcional)</span></label>
@@ -247,7 +247,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     const institucionSelect = document.getElementById('institucion');
     const clienteSelect = document.getElementById('id_cliente');
-    const emisionInput = document.querySelector('input[name="fecha_emision_licencia"]');
 
     institucionSelect.addEventListener('change', (event) => {
       actualizarSubtipos(event.target.value);
@@ -274,10 +273,6 @@
     if (preAnho) {
       const anhoInput = document.querySelector('input[name="anho"]');
       if (anhoInput) anhoInput.value = preAnho;
-      if (emisionInput && !emisionInput.value) {
-        const year = String(preAnho).padStart(4, '0');
-        emisionInput.value = `${year}-01-01`;
-      }
     }
 
     recalcularFinanzas();
