@@ -21,6 +21,10 @@ def list_clientes():
     per_page = request.args.get('per_page', type=int, default=PAGE_SIZE_OPTIONS[0])
     if per_page not in PAGE_SIZE_OPTIONS:
         per_page = PAGE_SIZE_OPTIONS[0]
+    sort_field = request.args.get('sort', 'nombre')
+    sort_direction = request.args.get('direction', 'asc')
+    if sort_direction not in ('asc', 'desc'):
+        sort_direction = 'asc'
 
     query = Cliente.query
     if q:
@@ -28,21 +32,53 @@ def list_clientes():
         query = query.filter(
             or_(
                 Cliente.nombre_razon_social.ilike(like),
-                Cliente.cedula_identidad.ilike(like)
+                Cliente.cedula_identidad.ilike(like),
+                Cliente.correo_electronico.ilike(like),
+                Cliente.telefono.ilike(like),
             )
         )
-    pagination = query.order_by(Cliente.nombre_razon_social.asc()).paginate(
+    sort_columns = {
+        'nombre': Cliente.nombre_razon_social,
+        'cedula': Cliente.cedula_identidad,
+        'correo': Cliente.correo_electronico,
+        'telefono': Cliente.telefono,
+        'departamento': Cliente.departamento,
+    }
+    if sort_field not in sort_columns:
+        sort_field = 'nombre'
+    order_column = sort_columns[sort_field]
+    if sort_direction == 'asc':
+        query = query.order_by(order_column.asc().nullslast(), Cliente.nombre_razon_social.asc())
+    else:
+        query = query.order_by(order_column.desc().nullslast(), Cliente.nombre_razon_social.desc())
+
+    pagination = query.paginate(
         page=page,
         per_page=per_page,
         error_out=False,
     )
     clientes = pagination.items
+    common_params = {
+        'q': q,
+        'per_page': per_page,
+        'sort': sort_field,
+        'direction': sort_direction,
+    }
+
+    def _build_url(**extra):
+        params = {k: v for k, v in common_params.items() if v}
+        params.update({k: v for k, v in extra.items() if v is not None})
+        return url_for('clientes.list_clientes', **params)
+
     return render_template(
         'clientes/list.html',
         clientes=clientes,
         q=q,
         pagination=pagination,
         per_page_options=PAGE_SIZE_OPTIONS,
+        sort_field=sort_field,
+        sort_direction=sort_direction,
+        build_client_url=_build_url,
     )
 
 

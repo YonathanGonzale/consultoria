@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, url_for
 from flask_login import login_required
 from ..models import Cliente, Proyecto
 from ..extensions import db
@@ -53,6 +53,7 @@ class ListPagination:
 def index():
     page = request.args.get('page', type=int, default=1)
     per_page = request.args.get('per_page', type=int, default=PAGE_SIZE_OPTIONS[0])
+    search = request.args.get('q', '', type=str).strip()
     if per_page not in PAGE_SIZE_OPTIONS:
         per_page = PAGE_SIZE_OPTIONS[0]
     if page < 1:
@@ -90,10 +91,34 @@ def index():
             'badge_class': badge_class,
         })
 
+    if search:
+        lowered = search.lower()
+        def _matches(item):
+            proyecto = item['proyecto']
+            cliente_nombre = (proyecto.cliente.nombre_razon_social if proyecto.cliente else '') or ''
+            proyecto_nombre = (proyecto.nombre_proyecto or f"{proyecto.institucion or ''} {proyecto.anho or ''}")
+            subtipo = proyecto.subtipo or ''
+            return (
+                lowered in cliente_nombre.lower()
+                or lowered in proyecto_nombre.lower()
+                or lowered in subtipo.lower()
+            )
+
+        proximos_items = list(filter(_matches, proximos_items))
+
     pagination = ListPagination(page, per_page, len(proximos_items))
     start = (pagination.page - 1) * pagination.per_page
     end = start + pagination.per_page
     proximos_page_items = proximos_items[start:end]
+
+    base_params = {'per_page': per_page}
+    if search:
+        base_params['q'] = search
+
+    def _build_dashboard_url(**extra):
+        params = dict(base_params)
+        params.update({k: v for k, v in extra.items() if v is not None})
+        return url_for('dashboard.index', **params)
 
     return render_template(
         'dashboard/index.html',
@@ -101,4 +126,6 @@ def index():
         proximos_items=proximos_page_items,
         pagination=pagination,
         per_page_options=PAGE_SIZE_OPTIONS,
+        search=search,
+        build_dashboard_url=_build_dashboard_url,
     )

@@ -18,7 +18,7 @@ from flask import (
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 
 from ..extensions import db
 from ..models import (
@@ -346,12 +346,71 @@ def index():
     if per_page not in PAGE_SIZE_OPTIONS:
         per_page = PAGE_SIZE_OPTIONS[0]
 
-    query = Proyecto.query.order_by(Proyecto.id_proyecto.desc())
+    search = request.args.get('q', '', type=str).strip()
+    sort_field = request.args.get('sort', 'cliente')
+    sort_direction = request.args.get('direction', 'desc')
+    if sort_direction not in ('asc', 'desc'):
+        sort_direction = 'desc'
+
+    query = Proyecto.query.outerjoin(Cliente)
+
     if proyecto_id:
         query = query.filter(Proyecto.id_proyecto == proyecto_id)
 
+    if search:
+        like = f"%{search}%"
+        query = query.filter(
+            or_(
+                Cliente.nombre_razon_social.ilike(like),
+                Proyecto.institucion.ilike(like),
+                Proyecto.subtipo.ilike(like),
+                Proyecto.nombre_proyecto.ilike(like),
+                func.cast(Proyecto.anho, db.String).ilike(like),
+            )
+        )
+
+    sort_columns = {
+        'cliente': func.lower(Cliente.nombre_razon_social),
+        'institucion': func.lower(Proyecto.institucion),
+        'anho': Proyecto.anho,
+        'subtipo': func.lower(Proyecto.subtipo),
+        'proyecto': func.lower(Proyecto.nombre_proyecto),
+        'estado': Proyecto.estado,
+    }
+    if sort_field not in sort_columns:
+        sort_field = 'cliente'
+    order_column = sort_columns[sort_field]
+    if sort_direction == 'asc':
+        query = query.order_by(order_column.asc(), Proyecto.id_proyecto.asc())
+    else:
+        query = query.order_by(order_column.desc(), Proyecto.id_proyecto.desc())
+
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     proyectos = pagination.items
+    active_filter_params = {}
+    if search:
+        active_filter_params['q'] = search
+    if proyecto_id:
+        active_filter_params['proyecto_id'] = proyecto_id
+    query_defaults = {
+        **active_filter_params,
+        'per_page': per_page,
+        'sort': sort_field,
+        'direction': sort_direction,
+    }
+    clean_params = {
+        'per_page': per_page,
+        'sort': sort_field,
+        'direction': sort_direction,
+    }
+    if proyecto_id:
+        clean_params['proyecto_id'] = proyecto_id
+
+    def _build_url(**extra):
+        params = dict(query_defaults)
+        params.update({k: v for k, v in extra.items() if v is not None})
+        return url_for('proyectos.index', **params)
+
     return render_template(
         'proyectos/list.html',
         proyectos=proyectos,
@@ -359,6 +418,12 @@ def index():
         pagination=pagination,
         per_page_options=PAGE_SIZE_OPTIONS,
         proyecto_id=proyecto_id,
+        search=search,
+        sort_field=sort_field,
+        sort_direction=sort_direction,
+        query_defaults=query_defaults,
+        build_projects_url=_build_url,
+        clean_filter_url=url_for('proyectos.index', **clean_params),
     )
 
 
