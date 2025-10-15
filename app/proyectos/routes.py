@@ -417,33 +417,24 @@ def index():
         params.update({k: v for k, v in extra.items() if v is not None})
         return url_for('proyectos.index', **params)
 
-    def _determine_estado_label(proyecto):
-        institucion = (proyecto.institucion or '').lower()
-        subtipo = (proyecto.subtipo or '').lower()
-        if (institucion == 'mades' and subtipo == 'otros') or institucion == 'asesoría jurídica' or institucion == 'asesoria juridica':
-            return None
-        if proyecto.estado:
-            key = proyecto.estado.value
-            if key in ESTADO_LABELS:
-                return ESTADO_LABELS[key]
-            return key.replace('_', ' ').title()
-        return None
+    template_kwargs = {
+        'proyectos': proyectos,
+        'estado_labels': ESTADO_LABELS,
+        'pagination': pagination,
+        'per_page_options': PAGE_SIZE_OPTIONS,
+        'proyecto_id': proyecto_id,
+        'search': search,
+        'sort_field': sort_field,
+        'sort_direction': sort_direction,
+        'query_defaults': query_defaults,
+        'build_projects_url': _build_url,
+        'clean_filter_url': url_for('proyectos.index', **clean_params),
+    }
 
-    return render_template(
-        'proyectos/list.html',
-        proyectos=proyectos,
-        estado_labels=ESTADO_LABELS,
-        pagination=pagination,
-        per_page_options=PAGE_SIZE_OPTIONS,
-        proyecto_id=proyecto_id,
-        search=search,
-        sort_field=sort_field,
-        sort_direction=sort_direction,
-        query_defaults=query_defaults,
-        build_projects_url=_build_url,
-        clean_filter_url=url_for('proyectos.index', **clean_params),
-        estado_label_fn=_determine_estado_label,
-    )
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('proyectos/_results.html', **template_kwargs)
+
+    return render_template('proyectos/list.html', **template_kwargs)
 
 
 @bp.route('/nuevo', methods=['GET', 'POST'])

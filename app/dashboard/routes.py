@@ -120,12 +120,16 @@ def index():
         params.update({k: v for k, v in extra.items() if v is not None})
         return url_for('dashboard.index', **params)
 
-    return render_template(
-        'dashboard/index.html',
-        total_clientes=total_clientes,
-        proximos_items=proximos_page_items,
-        pagination=pagination,
-        per_page_options=PAGE_SIZE_OPTIONS,
-        search=search,
-        build_dashboard_url=_build_dashboard_url,
-    )
+    template_kwargs = {
+        'total_clientes': total_clientes,
+        'proximos_items': proximos_page_items,
+        'pagination': pagination,
+        'per_page_options': PAGE_SIZE_OPTIONS,
+        'search': search,
+        'build_dashboard_url': _build_dashboard_url,
+    }
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('dashboard/_results.html', **template_kwargs)
+
+    return render_template('dashboard/index.html', **template_kwargs)

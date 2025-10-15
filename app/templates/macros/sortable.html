@@ -1,0 +1,9 @@
+{% macro header(label, key, sort_field, sort_direction, build_url) -%}
+  {% set is_sorted = sort_field == key %}
+  {% set next_direction = 'desc' if is_sorted and sort_direction == 'asc' else 'asc' %}
+  <a href="{{ build_url(sort=key, direction=next_direction, page=1) }}"
+     class="text-decoration-none text-reset d-inline-flex align-items-center gap-1">
+    <span>{{ label }}</span>
+    <i class="bi {% if is_sorted %}{% if sort_direction == 'asc' %}bi-arrow-up-short{% else %}bi-arrow-down-short{% endif %}{% else %}bi-arrow-down-up{% endif %}"></i>
+  </a>
+{%- endmacro %}

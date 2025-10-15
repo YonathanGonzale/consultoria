@@ -70,16 +70,20 @@ def list_clientes():
         params.update({k: v for k, v in extra.items() if v is not None})
         return url_for('clientes.list_clientes', **params)
 
-    return render_template(
-        'clientes/list.html',
-        clientes=clientes,
-        q=q,
-        pagination=pagination,
-        per_page_options=PAGE_SIZE_OPTIONS,
-        sort_field=sort_field,
-        sort_direction=sort_direction,
-        build_client_url=_build_url,
-    )
+    template_kwargs = {
+        'clientes': clientes,
+        'q': q,
+        'pagination': pagination,
+        'per_page_options': PAGE_SIZE_OPTIONS,
+        'sort_field': sort_field,
+        'sort_direction': sort_direction,
+        'build_client_url': _build_url,
+    }
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('clientes/_results.html', **template_kwargs)
+
+    return render_template('clientes/list.html', **template_kwargs)
 
 
 ALLOWED_CLIENT_DOCS = {'.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp'}

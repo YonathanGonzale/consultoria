@@ -11,13 +11,12 @@
   </div>
 </div>
 
-{% set current_count = proximos_items|length %}
-{% set start_index = (pagination.page - 1) * pagination.per_page + (1 if current_count else 0) %}
-{% set end_index = (pagination.page - 1) * pagination.per_page + current_count %}
-
 <h5 class="mt-4 mb-2">Próximos vencimientos</h5>
 
-<form method="get" class="mb-3">
+<form method="get" class="mb-3"
+      data-live-search="true"
+      data-results-target="#dashboard-results"
+      data-min-length="2">
   <input type="hidden" name="per_page" value="{{ pagination.per_page }}">
   <input type="hidden" name="page" value="1">
   <div class="input-group input-group-lg">
@@ -27,100 +26,7 @@
   </div>
 </form>
 
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-  <p class="mb-0 text-muted small">
-    {% if pagination.total %}
-      Mostrando {{ start_index }}–{{ end_index }} de {{ pagination.total }} próximos vencimientos
-      {% if search %}(filtrado por "{{ search }}"){% endif %}
-    {% else %}
-      Sin vencimientos para mostrar
-    {% endif %}
-  </p>
-  <form method="get" class="ms-auto" style="max-width: 220px;">
-    <input type="hidden" name="q" value="{{ search }}">
-    <input type="hidden" name="page" value="1">
-    <div class="input-group input-group-sm">
-      <span class="input-group-text text-muted">Filas</span>
-      <select id="dashboard-per-page" class="form-select form-select-sm" name="per_page" onchange="this.form.submit()" style="min-width: 90px;">
-        {% for option in per_page_options %}
-          <option value="{{ option }}" {% if option == pagination.per_page %}selected{% endif %}>{{ option }}</option>
-        {% endfor %}
-      </select>
-      <span class="input-group-text text-muted">/ pág.</span>
-    </div>
-  </form>
+<div id="dashboard-results">
+  {% include 'dashboard/_results.html' %}
 </div>
-
-<table class="table table-sm align-middle">
-  <thead>
-    <tr>
-      <th>Cliente</th>
-      <th>Proyecto</th>
-      <th>Subtipo</th>
-      <th>Estado</th>
-      <th>Vencimiento licencia</th>
-      <th>Días restantes</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for item in proximos_items %}
-      {% set p = item.proyecto %}
-      <tr>
-        <td>
-          <a href="{{ url_for('proyectos.index', proyecto_id=p.id_proyecto) }}"
-             class="text-decoration-none">
-            {{ p.cliente.nombre_razon_social if p.cliente else '-' }}
-          </a>
-        </td>
-        <td>{{ p.nombre_proyecto or (p.institucion ~ ' ' ~ (p.anho or '')) }}</td>
-        <td>{{ p.subtipo or '-' }}</td>
-        <td>
-          {% set estado_val = p.estado.value if p.estado else 'en_proceso' %}
-          <span class="badge bg-{% if estado_val == 'licencia_emitida' %}success{% elif estado_val == 'en_proceso' %}warning text-dark{% else %}secondary{% endif %}">
-            {{ estado_val.replace('_', ' ')|title }}
-          </span>
-        </td>
-        <td>{{ p.fecha_vencimiento_licencia.strftime('%d/%m/%Y') if p.fecha_vencimiento_licencia else '—' }}</td>
-        <td>
-          <span class="badge {{ item.badge_class }}">
-            {% if item.dias_restantes < 0 %}
-              Vencido ({{ item.dias_restantes | abs }} días)
-            {% else %}
-              {{ item.dias_restantes }} días
-            {% endif %}
-          </span>
-        </td>
-      </tr>
-    {% else %}
-      <tr><td colspan="6">Sin datos</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-{% if pagination.pages > 1 %}
-<nav aria-label="Paginación de próximos vencimientos">
-  <ul class="pagination pagination-sm justify-content-center">
-    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-      <a class="page-link" href="{% if pagination.has_prev %}{{ build_dashboard_url(page=pagination.prev_num) }}{% else %}#{% endif %}" aria-label="Anterior">
-        <span aria-hidden="true">&laquo;</span>
-      </a>
-    </li>
-    {% for page_num in pagination.iter_pages() %}
-      {% if page_num %}
-        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-          <a class="page-link" href="{{ build_dashboard_url(page=page_num) }}">{{ page_num }}</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">…</span></li>
-      {% endif %}
-    {% endfor %}
-    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-      <a class="page-link" href="{% if pagination.has_next %}{{ build_dashboard_url(page=pagination.next_num) }}{% else %}#{% endif %}" aria-label="Siguiente">
-        <span aria-hidden="true">&raquo;</span>
-      </a>
-    </li>
-  </ul>
-</nav>
-{% endif %}
-
 {% endblock %}

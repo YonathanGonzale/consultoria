@@ -1,14 +1,5 @@
 {% extends 'base.html' %}
-
-{% macro sortable_header(label, key) -%}
-  {% set is_sorted = sort_field == key %}
-  {% set next_direction = 'desc' if is_sorted and sort_direction == 'asc' else 'asc' %}
-  <a href="{{ build_projects_url(sort=key, direction=next_direction, page=1) }}"
-     class="text-decoration-none text-reset d-inline-flex align-items-center gap-1">
-    <span>{{ label }}</span>
-    <i class="bi {% if is_sorted %}{% if sort_direction == 'asc' %}bi-arrow-up-short{% else %}bi-arrow-down-short{% endif %}{% else %}bi-arrow-down-up{% endif %}"></i>
-  </a>
-{%- endmacro %}
+{% import 'macros/sortable.html' as sortable %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
@@ -18,7 +9,17 @@
   </a>
   </div>
 
-<form method="get" class="mb-3">
+<form method="get" class="mb-3"
+      data-live-search="true"
+      data-results-target="#proyectos-results"
+      data-min-length="2">
+  {% if proyecto_id %}
+    <input type="hidden" name="proyecto_id" value="{{ proyecto_id }}">
+  {% endif %}
+  <input type="hidden" name="page" value="1">
+  <input type="hidden" name="per_page" value="{{ pagination.per_page }}">
+  <input type="hidden" name="sort" value="{{ sort_field }}">
+  <input type="hidden" name="direction" value="{{ sort_direction }}">
   <div class="input-group input-group-lg">
     <span class="input-group-text"><i class="bi bi-search"></i></span>
     <input type="search"
@@ -26,130 +27,13 @@
            name="q"
            value="{{ search }}"
            placeholder="Buscar por cliente, institución, proyecto o año">
-    {% if proyecto_id %}
-      <input type="hidden" name="proyecto_id" value="{{ proyecto_id }}">
-    {% endif %}
-    <input type="hidden" name="page" value="1">
-    <input type="hidden" name="per_page" value="{{ pagination.per_page }}">
-    <input type="hidden" name="sort" value="{{ sort_field }}">
-    <input type="hidden" name="direction" value="{{ sort_direction }}">
     <button class="btn btn-outline-secondary" type="submit">Buscar</button>
   </div>
 </form>
 
-{% set current_count = proyectos|length %}
-{% set start_index = (pagination.page - 1) * pagination.per_page + (1 if current_count else 0) %}
-{% set end_index = (pagination.page - 1) * pagination.per_page + current_count %}
-
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-  <p class="mb-0 text-muted small">
-    {% if pagination.total %}
-      Mostrando {{ start_index }}–{{ end_index }} de {{ pagination.total }} proyectos
-    {% else %}
-      Sin proyectos para mostrar
-    {% endif %}
-  </p>
-  <form method="get" class="ms-auto" style="max-width: 220px;">
-    <input type="hidden" name="q" value="{{ search }}">
-    {% if proyecto_id %}
-      <input type="hidden" name="proyecto_id" value="{{ proyecto_id }}">
-    {% endif %}
-    <input type="hidden" name="sort" value="{{ sort_field }}">
-    <input type="hidden" name="direction" value="{{ sort_direction }}">
-    <input type="hidden" name="page" value="1">
-    <div class="input-group input-group-sm">
-      <span class="input-group-text text-muted">Filas</span>
-      <select id="proyectos-per-page" class="form-select form-select-sm" name="per_page" onchange="this.form.submit()" style="min-width: 90px;">
-        {% for option in per_page_options %}
-          <option value="{{ option }}" {% if option == pagination.per_page %}selected{% endif %}>{{ option }}</option>
-        {% endfor %}
-      </select>
-      <span class="input-group-text text-muted">/ pág.</span>
-    </div>
-  </form>
+<div id="proyectos-results">
+  {% include 'proyectos/_results.html' %}
 </div>
-
-<table class="table table-sm table-striped align-middle">
-  <thead>
-    <tr>
-      <th>{{ sortable_header('Cliente', 'cliente')|safe }}</th>
-      <th>{{ sortable_header('Institución', 'institucion')|safe }}</th>
-      <th>{{ sortable_header('Año', 'anho')|safe }}</th>
-      <th>{{ sortable_header('Subtipo', 'subtipo')|safe }}</th>
-      <th>{{ sortable_header('Proyecto', 'proyecto')|safe }}</th>
-      <th>{{ sortable_header('Estado', 'estado')|safe }}</th>
-      <th class="text-end">Acciones</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for p in proyectos %}
-    {% set institucion_norm = (p.institucion or '')|lower|replace('á','a')|replace('é','e')|replace('í','i')|replace('ó','o')|replace('ú','u') %}
-    {% set subtipo_norm = (p.subtipo or '')|lower|replace('á','a')|replace('é','e')|replace('í','i')|replace('ó','o')|replace('ú','u') %}
-    {% set estado_val = p.estado.value if p.estado else None %}
-    {% set mostrar_estado = not ((institucion_norm == 'mades' and subtipo_norm == 'otros') or institucion_norm == 'asesoria juridica') %}
-    <tr>
-      <td>{{ p.cliente.nombre_razon_social if p.cliente else '-' }}</td>
-      <td>{{ p.institucion }}</td>
-      <td>{{ p.anho }}</td>
-      <td>{{ p.subtipo or '-' }}</td>
-      <td>{{ p.nombre_proyecto or '-' }}</td>
-      <td>
-        {% if mostrar_estado and estado_val %}
-        <span class="badge bg-{% if estado_val == 'licencia_emitida' %}success{% elif estado_val == 'en_proceso' %}warning text-dark{% else %}secondary{% endif %}">
-          {{ estado_labels[estado_val]|title if estado_labels and estado_val in estado_labels else estado_val.replace('_',' ')|title }}
-        </span>
-        {% else %}
-        <span class="text-muted">—</span>
-        {% endif %}
-      </td>
-      <td class="text-end">
-        <a href="{{ url_for('proyectos.editar', id_proyecto=p.id_proyecto) }}" class="btn btn-sm btn-outline-primary" title="Editar">
-          <i class="bi bi-pencil"></i>
-        </a>
-        {% if p.cliente and p.anho and p.institucion %}
-        <a href="{{ url_for('proyectos.board', id_cliente=p.id_cliente, ano=p.anho, inst=p.institucion) }}" class="btn btn-sm btn-outline-info" title="Ver tablero">
-          <i class="bi bi-kanban"></i>
-        </a>
-        {% endif %}
-        <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar" 
-                data-proyecto-id="{{ p.id_proyecto }}" 
-                data-proyecto-tipo="{{ p.nombre_proyecto or p.subtipo or 'Proyecto' }}"
-                onclick="confirmarEliminar(this)">
-          <i class="bi bi-trash"></i>
-        </button>
-      </td>
-    </tr>
-  {% else %}
-    <tr><td colspan="7">Sin proyectos</td></tr>
-  {% endfor %}
-  </tbody>
-</table>
-
-{% if pagination.pages > 1 %}
-<nav aria-label="Paginación de proyectos">
-  <ul class="pagination pagination-sm justify-content-center">
-    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-      <a class="page-link" href="{% if pagination.has_prev %}{{ build_projects_url(page=pagination.prev_num) }}{% else %}#{% endif %}" aria-label="Anterior">
-        <span aria-hidden="true">&laquo;</span>
-      </a>
-    </li>
-    {% for page_num in pagination.iter_pages() %}
-      {% if page_num %}
-        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-          <a class="page-link" href="{{ build_projects_url(page=page_num) }}">{{ page_num }}</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">…</span></li>
-      {% endif %}
-    {% endfor %}
-    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-      <a class="page-link" href="{% if pagination.has_next %}{{ build_projects_url(page=pagination.next_num) }}{% else %}#{% endif %}" aria-label="Siguiente">
-        <span aria-hidden="true">&raquo;</span>
-      </a>
-    </li>
-  </ul>
-</nav>
-{% endif %}
 
 <!-- Modal de confirmación -->
 <div class="modal fade" id="modalEliminar" tabindex="-1">
