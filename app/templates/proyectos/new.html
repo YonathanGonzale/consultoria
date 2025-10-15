@@ -46,7 +46,7 @@
               <input type="text" class="form-control" name="nombre_proyecto" placeholder="Descripción o referencia del proyecto" required>
               <div class="form-text">Ej.: EIA Planta Agroindustrial Curuguaty.</div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3" data-mode-hide="mades-otros,asesoria-juridica">
               <label class="form-label">Estado</label>
               <select name="estado" class="form-select">
                 {% for estado in estados %}
@@ -63,7 +63,7 @@
       </div>
     </div>
 
-    <div class="col-lg-6">
+    <div class="col-lg-6" data-mode-hide="mades-otros,asesoria-juridica">
       <div class="card h-100">
         <div class="card-body">
           <h6 class="text-uppercase text-muted fw-semibold mb-3">Cronograma y licencias</h6>
@@ -85,7 +85,7 @@
       </div>
     </div>
 
-    <div class="col-lg-6">
+    <div class="col-lg-6" data-mode-hide="mades-otros,asesoria-juridica">
       <div class="card h-100">
         <div class="card-body">
           <h6 class="text-uppercase text-muted fw-semibold mb-3">Finanzas</h6>
@@ -120,7 +120,7 @@
       </div>
     </div>
 
-    <div class="col-12">
+    <div class="col-12" data-mode-hide="mades-otros">
       <div class="card">
         <div class="card-body">
           <h6 class="text-uppercase text-muted fw-semibold mb-3">Ubicación y predio</h6>
@@ -228,6 +228,7 @@
       opt.selected = true;
       subtipoSelect.appendChild(opt);
     }
+    aplicarModoFormulario();
   }
 
   function formatoMoneda(valor) {
@@ -245,13 +246,79 @@
     document.getElementById('saldo_restante_preview').textContent = formatoMoneda(saldoRestante);
   }
 
+  function toggleElementForMode(element, hidden) {
+    if (!element) return;
+    element.classList.toggle('d-none', hidden);
+    const controls = element.querySelectorAll('input, select, textarea');
+    controls.forEach((control) => {
+      if (control.dataset.modeOriginalDisabled === undefined) {
+        control.dataset.modeOriginalDisabled = control.disabled ? '1' : '0';
+      }
+      if (control.dataset.modeOriginalRequired === undefined) {
+        control.dataset.modeOriginalRequired = control.required ? '1' : '0';
+      }
+      if (hidden) {
+        control.disabled = true;
+        control.removeAttribute('required');
+      } else {
+        control.disabled = control.dataset.modeOriginalDisabled === '1';
+        if (control.dataset.modeOriginalRequired === '1') {
+          control.setAttribute('required', 'required');
+        } else {
+          control.removeAttribute('required');
+        }
+      }
+    });
+  }
+
+  function normalizeText(value) {
+    return (value || '')
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  function obtenerModoActual() {
+    const institucionSelect = document.getElementById('institucion');
+    const subtipoSelect = document.getElementById('subtipo');
+    if (!institucionSelect || !subtipoSelect) {
+      return null;
+    }
+    const institucionValue = normalizeText(institucionSelect.value);
+    const subtipoValue = normalizeText(subtipoSelect.value);
+    if (institucionValue === 'mades' && subtipoValue === 'otros') {
+      return 'mades-otros';
+    }
+    if (institucionValue === 'asesoria juridica') {
+      return 'asesoria-juridica';
+    }
+    return null;
+  }
+
+  function aplicarModoFormulario() {
+    const modo = obtenerModoActual();
+    document.querySelectorAll('[data-mode-hide]').forEach((element) => {
+      const modes = element.dataset.modeHide
+        .split(',')
+        .map((item) => normalizeText(item))
+        .filter(Boolean);
+      const shouldHide = !!modo && modes.includes(modo);
+      toggleElementForMode(element, shouldHide);
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     const institucionSelect = document.getElementById('institucion');
     const clienteSelect = document.getElementById('id_cliente');
+    const subtipoSelect = document.getElementById('subtipo');
 
     institucionSelect.addEventListener('change', (event) => {
       actualizarSubtipos(event.target.value);
     });
+
+    subtipoSelect.addEventListener('change', aplicarModoFormulario);
 
     document.getElementById('costo_total').addEventListener('input', recalcularFinanzas);
     document.getElementById('porcentaje_entrega').addEventListener('input', recalcularFinanzas);
@@ -277,6 +344,7 @@
     }
 
     recalcularFinanzas();
+    aplicarModoFormulario();
   });
 </script>
 {% endblock %}

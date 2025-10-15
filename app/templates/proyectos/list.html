@@ -83,7 +83,10 @@
   </thead>
   <tbody>
   {% for p in proyectos %}
-    {% set estado_val = p.estado.value if p.estado else 'en_proceso' %}
+    {% set institucion_norm = (p.institucion or '')|lower|replace('á','a')|replace('é','e')|replace('í','i')|replace('ó','o')|replace('ú','u') %}
+    {% set subtipo_norm = (p.subtipo or '')|lower|replace('á','a')|replace('é','e')|replace('í','i')|replace('ó','o')|replace('ú','u') %}
+    {% set estado_val = p.estado.value if p.estado else None %}
+    {% set mostrar_estado = not ((institucion_norm == 'mades' and subtipo_norm == 'otros') or institucion_norm == 'asesoria juridica') %}
     <tr>
       <td>{{ p.cliente.nombre_razon_social if p.cliente else '-' }}</td>
       <td>{{ p.institucion }}</td>
@@ -91,9 +94,13 @@
       <td>{{ p.subtipo or '-' }}</td>
       <td>{{ p.nombre_proyecto or '-' }}</td>
       <td>
+        {% if mostrar_estado and estado_val %}
         <span class="badge bg-{% if estado_val == 'licencia_emitida' %}success{% elif estado_val == 'en_proceso' %}warning text-dark{% else %}secondary{% endif %}">
           {{ estado_labels[estado_val]|title if estado_labels and estado_val in estado_labels else estado_val.replace('_',' ')|title }}
         </span>
+        {% else %}
+        <span class="text-muted">—</span>
+        {% endif %}
       </td>
       <td class="text-end">
         <a href="{{ url_for('proyectos.editar', id_proyecto=p.id_proyecto) }}" class="btn btn-sm btn-outline-primary" title="Editar">
