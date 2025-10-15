@@ -15,7 +15,9 @@
 {% set start_index = (pagination.page - 1) * pagination.per_page + (1 if current_count else 0) %}
 {% set end_index = (pagination.page - 1) * pagination.per_page + current_count %}
 
-<form method="get" class="mt-4 mb-3">
+<h5 class="mt-4 mb-2">Próximos vencimientos</h5>
+
+<form method="get" class="mb-3">
   <input type="hidden" name="per_page" value="{{ pagination.per_page }}">
   <input type="hidden" name="page" value="1">
   <div class="input-group input-group-lg">
@@ -26,17 +28,14 @@
 </form>
 
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-  <div>
-    <h5 class="mb-1">Próximos vencimientos</h5>
-    <p class="mb-0 text-muted small">
-      {% if pagination.total %}
-        Mostrando {{ start_index }}–{{ end_index }} de {{ pagination.total }} próximos vencimientos
-      {% if search %} (filtrado por "{{ search }}"){% endif %}
-      {% else %}
-        Sin vencimientos para mostrar
-      {% endif %}
-    </p>
-  </div>
+  <p class="mb-0 text-muted small">
+    {% if pagination.total %}
+      Mostrando {{ start_index }}–{{ end_index }} de {{ pagination.total }} próximos vencimientos
+      {% if search %}(filtrado por "{{ search }}"){% endif %}
+    {% else %}
+      Sin vencimientos para mostrar
+    {% endif %}
+  </p>
   <form method="get" class="ms-auto" style="max-width: 220px;">
     <input type="hidden" name="q" value="{{ search }}">
     <input type="hidden" name="page" value="1">

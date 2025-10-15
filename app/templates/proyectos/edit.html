@@ -196,12 +196,12 @@
       <div class="card">
         <div class="card-body">
           <h6 class="text-uppercase text-muted fw-semibold mb-3">Documentación</h6>
-          {% set docs_ns = namespace(mapa=None, factura=None) %}
+          {% set docs_ns = namespace(mapa=None, facturas=[]) %}
           {% for doc in documentos %}
             {% if doc.categoria == 'mapa' and docs_ns.mapa is none %}
               {% set docs_ns.mapa = doc %}
-            {% elif doc.categoria == 'factura' and docs_ns.factura is none %}
-              {% set docs_ns.factura = doc %}
+            {% elif doc.categoria == 'factura' %}
+              {% set _ = docs_ns.facturas.append(doc) %}
             {% endif %}
           {% endfor %}
           <div class="row g-3">
@@ -222,15 +222,28 @@
             </div>
             <div class="col-md-6">
               <label class="form-label">Factura o comprobante</label>
-              {% if docs_ns.factura %}
-              <div class="d-flex align-items-center gap-2 mb-2">
-                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('proyectos.descargar_doc', id_doc=docs_ns.factura.id_documento) }}" title="Descargar factura">
-                  <i class="bi bi-download"></i> Descargar actual
-                </a>
+              {% if docs_ns.facturas %}
+              <div class="d-flex flex-column gap-2 mb-2">
+                {% for factura in docs_ns.facturas %}
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-success">
+                    {{ factura.nombre_original or ('Factura ' ~ loop.index) }}
+                  </span>
+                  <div class="btn-group btn-group-sm">
+                    <a class="btn btn-outline-primary" href="{{ url_for('proyectos.descargar_doc', id_doc=factura.id_documento) }}" title="Descargar factura">
+                      <i class="bi bi-download"></i>
+                    </a>
+                    <a class="btn btn-outline-secondary" href="{{ url_for('proyectos.ver_doc', id_doc=factura.id_documento) }}" title="Ver factura" target="_blank">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </div>
+                </div>
+                {% endfor %}
+                <small class="text-muted">Usá la sección de documentos existentes para eliminar facturas anteriores.</small>
               </div>
               {% endif %}
-              <input type="file" class="form-control" name="factura" accept=".pdf,.jpg,.jpeg,.png,.webp">
-              <div class="form-text">Al adjuntar una nueva factura se sobrescribe la anterior.</div>
+              <input type="file" class="form-control" name="facturas" multiple accept=".pdf,.jpg,.jpeg,.png,.webp">
+              <div class="form-text">Podés adjuntar una o varias facturas. Se agregarán a la lista.</div>
             </div>
             <div class="col-12">
               <label class="form-label">Agregar notas y shapefile/mapas</label>
@@ -251,7 +264,7 @@
           {% if documentos %}
           <div class="row g-3">
             {% for doc in documentos %}
-            {% if doc.categoria not in ['mapa', 'factura'] %}
+            {% if doc.categoria != 'mapa' %}
             {% set _ = delete_forms.items.append((doc.id_documento, url_for('proyectos.eliminar_doc', id_doc=doc.id_documento))) %}
             <div class="col-md-4 col-lg-3">
               <div class="card h-100 shadow-sm">

@@ -36,6 +36,7 @@ MADES_SUBTIPOS = [
     ('EIA', 'Evaluación de Impacto Ambiental Preliminar'),
     ('Auditorías', 'Auditorías'),
     ('PGAG', 'Plan de Gestión Ambiental Genérico'),
+    ('Plan de ajuste Ambiental', 'Plan de ajuste Ambiental'),
     ('Certificado de No Requiere', 'Certificado de No Requiere'),
     ('Certificación de Servicios Ambientales', 'Certificación de Servicios Ambientales'),
     ('Otros', 'Otros'),
@@ -242,12 +243,17 @@ def _fill_project_from_form(proyecto, form_data):
 
 
 def _process_project_files(proyecto, files):
-    factura = files.get('factura')
-    if factura and factura.filename:
-        _clear_documents(proyecto, 'factura')
-        _remove_file(proyecto.factura_archivo_url)
+    factura_archivos = [
+        f for f in files.getlist('facturas') if f and getattr(f, 'filename', '')
+    ]
+    factura_unica = files.get('factura')
+    if factura_unica and factura_unica.filename:
+        factura_archivos.append(factura_unica)
+
+    for factura_doc in factura_archivos:
         try:
-            relative = _save_project_document(proyecto, factura, categoria='factura')
+            relative = _save_project_document(proyecto, factura_doc, categoria='factura')
+            # Mantener compatibilidad con referencias existentes al último archivo cargado
             proyecto.factura_archivo_url = relative
         except ValueError as exc:
             flash(str(exc), 'warning')
