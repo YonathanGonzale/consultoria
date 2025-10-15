@@ -8,7 +8,35 @@
   </div>
 </div>
 
-<h5 class="mt-4">Próximos vencimientos</h5>
+{% set current_count = proximos_items|length %}
+{% set start_index = (pagination.page - 1) * pagination.per_page + (1 if current_count else 0) %}
+{% set end_index = (pagination.page - 1) * pagination.per_page + current_count %}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between mt-4 mb-3 gap-3">
+  <div>
+    <h5 class="mb-1">Próximos vencimientos</h5>
+    <p class="mb-0 text-muted small">
+      {% if pagination.total %}
+        Mostrando {{ start_index }}–{{ end_index }} de {{ pagination.total }} próximos vencimientos
+      {% else %}
+        Sin vencimientos para mostrar
+      {% endif %}
+    </p>
+  </div>
+  <form method="get" class="ms-auto" style="max-width: 220px;">
+    <input type="hidden" name="page" value="1">
+    <div class="input-group input-group-sm">
+      <span class="input-group-text text-muted">Filas</span>
+      <select id="dashboard-per-page" class="form-select form-select-sm" name="per_page" onchange="this.form.submit()" style="min-width: 90px;">
+        {% for option in per_page_options %}
+          <option value="{{ option }}" {% if option == pagination.per_page %}selected{% endif %}>{{ option }}</option>
+        {% endfor %}
+      </select>
+      <span class="input-group-text text-muted">/ pág.</span>
+    </div>
+  </form>
+</div>
+
 <table class="table table-sm align-middle">
   <thead>
     <tr>
@@ -54,5 +82,31 @@
     {% endfor %}
   </tbody>
 </table>
+
+{% if pagination.pages > 1 %}
+<nav aria-label="Paginación de próximos vencimientos">
+  <ul class="pagination pagination-sm justify-content-center">
+    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+      <a class="page-link" href="{% if pagination.has_prev %}{{ url_for('dashboard.index', page=pagination.prev_num, per_page=pagination.per_page) }}{% else %}#{% endif %}" aria-label="Anterior">
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    </li>
+    {% for page_num in pagination.iter_pages() %}
+      {% if page_num %}
+        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('dashboard.index', page=page_num, per_page=pagination.per_page) }}">{{ page_num }}</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+      <a class="page-link" href="{% if pagination.has_next %}{{ url_for('dashboard.index', page=pagination.next_num, per_page=pagination.per_page) }}{% else %}#{% endif %}" aria-label="Siguiente">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
 
 {% endblock %}

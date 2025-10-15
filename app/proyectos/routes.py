@@ -30,6 +30,7 @@ from ..models import (
 )
 
 bp = Blueprint('proyectos', __name__)
+PAGE_SIZE_OPTIONS = (10, 20, 30, 40, 50, 100)
 
 MADES_SUBTIPOS = [
     ('EIA', 'Evaluación de Impacto Ambiental Preliminar'),
@@ -338,18 +339,26 @@ def _prepare_document_groups(documentos):
 @login_required
 def index():
     proyecto_id = request.args.get('proyecto_id', type=int)
+    page = request.args.get('page', type=int, default=1)
+    if page < 1:
+        page = 1
+    per_page = request.args.get('per_page', type=int, default=PAGE_SIZE_OPTIONS[0])
+    if per_page not in PAGE_SIZE_OPTIONS:
+        per_page = PAGE_SIZE_OPTIONS[0]
 
     query = Proyecto.query.order_by(Proyecto.id_proyecto.desc())
     if proyecto_id:
         query = query.filter(Proyecto.id_proyecto == proyecto_id)
-    else:
-        query = query.limit(50)
 
-    proyectos = query.all()
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    proyectos = pagination.items
     return render_template(
         'proyectos/list.html',
         proyectos=proyectos,
         estado_labels=ESTADO_LABELS,
+        pagination=pagination,
+        per_page_options=PAGE_SIZE_OPTIONS,
+        proyecto_id=proyecto_id,
     )
 
 

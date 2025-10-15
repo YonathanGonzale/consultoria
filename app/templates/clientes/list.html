@@ -11,12 +11,41 @@
 </div>
 
 <form class="mb-4" method="get">
+  <input type="hidden" name="page" value="1">
+  <input type="hidden" name="per_page" value="{{ pagination.per_page }}">
   <div class="input-group input-group-lg">
     <span class="input-group-text"><i class="bi bi-search"></i></span>
     <input class="form-control" name="q" placeholder="Buscar por nombre o cédula/RUC" value="{{ q }}">
     <button class="btn btn-outline-secondary">Buscar</button>
   </div>
 </form>
+
+{% set current_count = clientes|length %}
+{% set start_index = (pagination.page - 1) * pagination.per_page + (1 if current_count else 0) %}
+{% set end_index = (pagination.page - 1) * pagination.per_page + current_count %}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+  <p class="mb-0 text-muted small">
+    {% if pagination.total %}
+      Mostrando {{ start_index }}–{{ end_index }} de {{ pagination.total }} clientes
+    {% else %}
+      Sin clientes para mostrar
+    {% endif %}
+  </p>
+  <form method="get" class="ms-auto" style="max-width: 220px;">
+    <input type="hidden" name="q" value="{{ q }}">
+    <input type="hidden" name="page" value="1">
+    <div class="input-group input-group-sm">
+      <span class="input-group-text text-muted">Filas</span>
+      <select id="clientes-per-page" class="form-select form-select-sm" name="per_page" onchange="this.form.submit()" style="min-width: 90px;">
+        {% for option in per_page_options %}
+          <option value="{{ option }}" {% if option == pagination.per_page %}selected{% endif %}>{{ option }}</option>
+        {% endfor %}
+      </select>
+      <span class="input-group-text text-muted">/ pág.</span>
+    </div>
+  </form>
+</div>
 
 <div class="table-responsive">
   <table class="table table-hover align-middle">
@@ -66,4 +95,30 @@
     </tbody>
   </table>
 </div>
+
+{% if pagination.pages > 1 %}
+<nav aria-label="Paginación de clientes">
+  <ul class="pagination pagination-sm justify-content-center">
+    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+      <a class="page-link" href="{% if pagination.has_prev %}{{ url_for('clientes.list_clientes', page=pagination.prev_num, per_page=pagination.per_page, q=q) }}{% else %}#{% endif %}" aria-label="Anterior">
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    </li>
+    {% for page_num in pagination.iter_pages() %}
+      {% if page_num %}
+        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('clientes.list_clientes', page=page_num, per_page=pagination.per_page, q=q) }}">{{ page_num }}</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+      <a class="page-link" href="{% if pagination.has_next %}{{ url_for('clientes.list_clientes', page=pagination.next_num, per_page=pagination.per_page, q=q) }}{% else %}#{% endif %}" aria-label="Siguiente">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
 {% endblock %}

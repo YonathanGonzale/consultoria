@@ -9,11 +9,19 @@ from sqlalchemy import or_, func
 from werkzeug.utils import secure_filename
 
 bp = Blueprint('clientes', __name__)
+PAGE_SIZE_OPTIONS = (10, 20, 30, 40, 50, 100)
 
 @bp.route('/')
 @login_required
 def list_clientes():
     q = request.args.get('q', '')
+    page = request.args.get('page', type=int, default=1)
+    if page < 1:
+        page = 1
+    per_page = request.args.get('per_page', type=int, default=PAGE_SIZE_OPTIONS[0])
+    if per_page not in PAGE_SIZE_OPTIONS:
+        per_page = PAGE_SIZE_OPTIONS[0]
+
     query = Cliente.query
     if q:
         like = f'%{q}%'
@@ -23,8 +31,19 @@ def list_clientes():
                 Cliente.cedula_identidad.ilike(like)
             )
         )
-    clientes = query.order_by(Cliente.nombre_razon_social.asc()).all()
-    return render_template('clientes/list.html', clientes=clientes, q=q)
+    pagination = query.order_by(Cliente.nombre_razon_social.asc()).paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False,
+    )
+    clientes = pagination.items
+    return render_template(
+        'clientes/list.html',
+        clientes=clientes,
+        q=q,
+        pagination=pagination,
+        per_page_options=PAGE_SIZE_OPTIONS,
+    )
 
 
 ALLOWED_CLIENT_DOCS = {'.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp'}
