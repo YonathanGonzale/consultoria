@@ -319,10 +319,14 @@ def modulos(id_cliente):
         .all()
     )
 
+    project_counts = {inst or 'Otros': count for inst, count in module_rows}
+
+    preferred_order = ['MADES', 'SENAVE', 'INFONA', 'Asesoría Jurídica']
+    seen = set()
     modules = []
-    total_proyectos = 0
-    for institucion, cantidad in module_rows:
-        meta = _module_meta(institucion)
+
+    def _append_module(key):
+        meta = _module_meta(key)
         modules.append({
             'key': meta['key'],
             'label': meta['label'],
@@ -330,12 +334,20 @@ def modulos(id_cliente):
             'logo': meta['logo_url'],
             'color': meta['color'],
             'icon': meta['icon'],
-            'count': cantidad,
+            'count': project_counts.get(meta['key'], 0),
             'url': url_for('clientes.modulo_subtipos', id_cliente=id_cliente, inst=meta['key']),
         })
-        total_proyectos += cantidad
+        seen.add(meta['key'])
 
-    modules.sort(key=lambda item: item['label'])
+    for preferred in preferred_order:
+        if preferred in MODULE_DEFINITIONS:
+            _append_module(preferred)
+
+    for key in MODULE_DEFINITIONS.keys():
+        if key not in seen:
+            _append_module(key)
+
+    total_proyectos = sum(project_counts.values())
     create_project_url = url_for('proyectos.nuevo') + f'?id_cliente={id_cliente}'
 
     return render_template(
@@ -375,9 +387,30 @@ def modulo_subtipos(id_cliente, inst):
         db.session.query(Proyecto.subtipo, func.count(Proyecto.id_proyecto))
         .filter(Proyecto.id_cliente == id_cliente, Proyecto.institucion == meta['key'])
         .group_by(Proyecto.subtipo)
-        .order_by(func.count(Proyecto.id_proyecto).desc())
         .all()
     )
+
+    preferred_order = []
+    if meta['key'] == 'MADES':
+        preferred_order = [
+            'EIA',
+            'Auditorías',
+            'PGAG',
+            'Plan de ajuste Ambiental',
+            'Certificado de No Requiere',
+            'Certificación de Servicios Ambientales',
+            'Otros',
+        ]
+
+    def _sort_key(item):
+        nombre = item['name']
+        if preferred_order:
+            try:
+                index = preferred_order.index(nombre)
+                return (0, index)
+            except ValueError:
+                pass
+        return (1, nombre.lower())
 
     subtipos = []
     total_subtipos = 0
@@ -389,6 +422,8 @@ def modulo_subtipos(id_cliente, inst):
             'url': url_for('clientes.modulo_subtipo_anhos', id_cliente=id_cliente, inst=meta['key'], subtipo=nombre)
         })
         total_subtipos += 1
+
+    subtipos.sort(key=_sort_key)
 
     create_project_url = url_for('proyectos.nuevo') + f'?id_cliente={id_cliente}&institucion={meta["key"]}'
 
