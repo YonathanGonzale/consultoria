@@ -195,6 +195,31 @@
         </div>
       </div>
     </div>
+
+    <!-- Sección específica SENAVE -->
+    <div class="col-12 d-none" id="senave-section">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">SENAVE · Datos específicos</h6>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Desglose de subactividades</label>
+              <textarea class="form-control" name="senave_desglose" rows="3" placeholder="Detalle de la subactividad, requisitos, observaciones..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tipo o concepto</label>
+              <input type="text" class="form-control" name="senave_tipo_concepto" placeholder="Ej.: Registro inicial, Renovación, Cambio de titular, etc.">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Anexos de la subactividad (PDF/otros)</label>
+              <input type="file" class="form-control" name="senave_anexos" multiple
+                     accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xlsx,.zip,.rar">
+              <div class="form-text">Podés adjuntar uno o varios archivos relacionados específicamente a SENAVE.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="d-flex justify-content-end gap-2 mt-4">
@@ -203,8 +228,9 @@
   </div>
 </form>
 
+<script id="module-subtipos" type="application/json">{{ module_subtipos|tojson }}</script>
 <script>
-  const moduleSubtipos = {{ module_subtipos|tojson }};
+  const moduleSubtipos = JSON.parse(document.getElementById('module-subtipos').textContent);
 
   function actualizarSubtipos(moduloSeleccionado, valorActual) {
     const subtipoSelect = document.getElementById('subtipo');
@@ -313,9 +339,13 @@
     const institucionSelect = document.getElementById('institucion');
     const clienteSelect = document.getElementById('id_cliente');
     const subtipoSelect = document.getElementById('subtipo');
+    const senaveSection = document.getElementById('senave-section');
 
     institucionSelect.addEventListener('change', (event) => {
       actualizarSubtipos(event.target.value);
+      // Mostrar/ocultar sección SENAVE
+      const inst = normalizeText(event.target.value);
+      senaveSection.classList.toggle('d-none', inst !== 'senave');
     });
 
     subtipoSelect.addEventListener('change', aplicarModoFormulario);
@@ -338,6 +368,8 @@
     } else {
       actualizarSubtipos(institucionSelect.value, preSubtipo);
     }
+    // Activar visibilidad inicial SENAVE
+    senaveSection.classList.toggle('d-none', normalizeText(institucionSelect.value) !== 'senave');
     if (preAnho) {
       const anhoInput = document.querySelector('input[name="anho"]');
       if (anhoInput) anhoInput.value = preAnho;

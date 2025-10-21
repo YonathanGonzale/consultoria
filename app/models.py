@@ -90,6 +90,9 @@ class Proyecto(db.Model):
     superficie = db.Column(db.Numeric(12, 2))
     mapa_archivo_url = db.Column(db.Text)
     factura_archivo_url = db.Column(db.Text)
+    # Campos específicos para SENAVE
+    senave_desglose = db.Column(db.Text)
+    senave_tipo_concepto = db.Column(db.String(150))
 
     documentos = db.relationship('DocumentoProyecto', backref='proyecto', lazy=True)
     pagos = db.relationship('Pago', backref='proyecto', lazy=True)

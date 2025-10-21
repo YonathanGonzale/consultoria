@@ -238,6 +238,10 @@ def _fill_project_from_form(proyecto, form_data):
     proyecto.fraccion = form_data.get('fraccion') or None
     proyecto.superficie = _parse_decimal(form_data.get('superficie'))
 
+    # Campos específicos SENAVE
+    proyecto.senave_desglose = form_data.get('senave_desglose') or proyecto.senave_desglose
+    proyecto.senave_tipo_concepto = form_data.get('senave_tipo_concepto') or proyecto.senave_tipo_concepto
+
     proyecto.actualizar_finanzas()
     return proyecto
 
@@ -273,6 +277,15 @@ def _process_project_files(proyecto, files):
             continue
         try:
             _save_project_document(proyecto, doc_file, categoria='documento')
+        except ValueError as exc:
+            flash(str(exc), 'warning')
+
+    # Anexos específicos SENAVE (PDFs u otros permitidos)
+    for anex in files.getlist('senave_anexos'):
+        if not anex or not anex.filename:
+            continue
+        try:
+            _save_project_document(proyecto, anex, categoria='senave_anexo')
         except ValueError as exc:
             flash(str(exc), 'warning')
 
