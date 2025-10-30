@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% import 'macros/sortable.html' as sortable %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1">Clientes</h4>
+    <p class="text-muted small mb-0">Seleccioná un cliente para ver sus módulos activos o la ficha detallada.</p>
+  </div>
+  <a href="{{ url_for('clientes.nuevo_cliente') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle"></i> Agregar Cliente
+  </a>
+</div>
+
+<form class="mb-4" method="get"
+      data-live-search="true"
+      data-results-target="#clientes-results"
+      data-min-length="2">
+  <input type="hidden" name="page" value="1">
+  <input type="hidden" name="per_page" value="{{ pagination.per_page }}">
+  <input type="hidden" name="sort" value="{{ sort_field }}">
+  <input type="hidden" name="direction" value="{{ sort_direction }}">
+  <div class="input-group input-group-lg">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <input class="form-control" name="q" placeholder="Buscar por nombre, cédula/RUC, correo o teléfono" value="{{ q }}">
+    <button class="btn btn-outline-secondary">Buscar</button>
+  </div>
+</form>
+
+<div id="clientes-results">
+  {% include 'clientes/_results.html' %}
+</div>
+{% endblock %}

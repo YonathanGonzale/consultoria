@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+  {{ super() }}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+{% endblock %}
+{% block extra_scripts %}
+  {{ super() }}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="{{ url_for('static', filename='js/client-map.js') }}"></script>
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1">{{ cliente.nombre_razon_social }}</h4>
+    <p class="text-muted mb-0">Ficha del cliente y documentos de respaldo.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{{ url_for('clientes.list_clientes') }}">
+      <i class="bi bi-arrow-left"></i> Volver
+    </a>
+    <a class="btn btn-outline-primary" href="{{ url_for('clientes.editar_cliente', id_cliente=cliente.id_cliente) }}">
+      <i class="bi bi-pencil-square"></i> Editar cliente
+    </a>
+    <a class="btn btn-primary" href="{{ url_for('clientes.modulos', id_cliente=cliente.id_cliente) }}">
+      Gestionar proyectos
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6 class="text-uppercase text-muted fw-semibold mb-3">Resumen</h6>
+        <dl class="row mb-0">
+          <dt class="col-5 text-muted">Cédula / RUC</dt>
+          <dd class="col-7">{{ cliente.cedula_identidad or '—' }}</dd>
+          <dt class="col-5 text-muted">Correo</dt>
+          <dd class="col-7">{{ cliente.correo_electronico or '—' }}</dd>
+          <dt class="col-5 text-muted">Teléfono</dt>
+          <dd class="col-7">{{ cliente.telefono or '—' }}</dd>
+          <dt class="col-5 text-muted">Departamento</dt>
+          <dd class="col-7">{{ cliente.departamento or '—' }}</dd>
+          <dt class="col-5 text-muted">Distrito</dt>
+          <dd class="col-7">{{ cliente.distrito or '—' }}</dd>
+          <dt class="col-5 text-muted">Lugar / Barrio</dt>
+          <dd class="col-7">{{ cliente.lugar or '—' }}</dd>
+          <dt class="col-5 text-muted">Ubicación general</dt>
+          <dd class="col-7">{{ cliente.ubicacion_general or '—' }}</dd>
+          <dt class="col-5 text-muted">Ubicación GPS</dt>
+          <dd class="col-7">
+            {% if cliente.ubicacion_gps %}
+              <a href="{{ cliente.ubicacion_gps }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-geo-alt"></i> Abrir mapa
+              </a>
+            {% else %}
+              -
+            {% endif %}
+          </dd>
+        </dl>
+        {% if cliente.ubicacion_gps %}
+        <hr>
+        <div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-uppercase text-muted small fw-semibold">Vista previa</span>
+            <span class="text-muted small" id="cliente-map-view-coords">—</span>
+          </div>
+          <div
+            id="cliente-map"
+            class="client-map-container"
+            data-client-map="true"
+            data-editable="false"
+            data-initial-link="{{ cliente.ubicacion_gps|e }}"
+            data-default-lat="-25.2867"
+            data-default-lng="-57.6459"
+            data-coord-target="#cliente-map-view-coords"
+          ></div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6 class="text-uppercase text-muted fw-semibold mb-3">Cargar nuevos documentos</h6>
+        <form method="post" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label class="form-label">Seleccioná archivos</label>
+            <input type="file" class="form-control" name="documentos" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp">
+            <div class="form-text">Los archivos se guardarán en la carpeta del cliente.</div>
+          </div>
+          <button class="btn btn-primary btn-sm"><i class="bi bi-cloud-upload"></i> Adjuntar archivos</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="text-uppercase text-muted fw-semibold mb-3">Documentos cargados</h6>
+        {% if cliente.documentos %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Fecha</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for doc in cliente.documentos %}
+              <tr>
+                <td>{{ doc.nombre_original or 'Documento' }}</td>
+                <td>{{ doc.mime_type or '-' }}</td>
+                <td>{{ doc.uploaded_at.strftime('%d/%m/%Y') if doc.uploaded_at else '-' }}</td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('clientes.ver_documento_cliente', id_cliente=cliente.id_cliente, id_doc=doc.id_documento) }}" target="_blank">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('clientes.descargar_documento_cliente', id_cliente=cliente.id_cliente, id_doc=doc.id_documento) }}">
+                    <i class="bi bi-download"></i>
+                  </a>
+                  <form method="post" action="{{ url_for('clientes.eliminar_documento_cliente', id_cliente=cliente.id_cliente, id_doc=doc.id_documento) }}" class="d-inline" onsubmit="return confirm('¿Eliminar el documento seleccionado?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="alert alert-light border text-muted mb-0">
+          <i class="bi bi-folder"></i> No se cargaron documentos para este cliente todavía.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
