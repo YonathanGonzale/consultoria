@@ -1,0 +1,21 @@
+{% if financial.costo_total is not none or financial.entregado is not none or financial.saldo is not none or financial.percent is not none %}
+<div class="card financial-card shadow-sm">
+  <div class="card-body">
+    <h6 class="text-uppercase text-muted fw-semibold mb-3">Resumen financiero</h6>
+    {% if financial.percent is not none %}
+    <div class="d-flex justify-content-between align-items-center small text-muted mb-1">
+      <span>Avance del proyecto</span>
+      <span>{{ '%.1f'|format(financial.percent) }}%</span>
+    </div>
+    <div class="progress mb-3">
+      <div class="progress-bar" role="progressbar" style="width: {{ '%.2f'|format(financial.percent) }}%" aria-valuenow="{{ '%.2f'|format(financial.percent) }}" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    {% endif %}
+    <ul class="list-unstyled small mb-0">
+      <li class="d-flex justify-content-between"><span class="text-muted">Costo total</span><span>{{ financial.costo_total is not none and ('Gs. {:,.0f}'.format(financial.costo_total)) or '—' }}</span></li>
+      <li class="d-flex justify-content-between"><span class="text-muted">Monto entregado</span><span>{{ financial.entregado is not none and ('Gs. {:,.0f}'.format(financial.entregado)) or '—' }}</span></li>
+      <li class="d-flex justify-content-between"><span class="text-muted">Saldo restante</span><span>{{ financial.saldo is not none and ('Gs. {:,.0f}'.format(financial.saldo)) or '—' }}</span></li>
+    </ul>
+  </div>
+</div>
+{% endif %}

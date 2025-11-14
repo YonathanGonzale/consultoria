@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+  {{ super() }}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+{% endblock %}
+{% block extra_scripts %}
+  {{ super() }}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="{{ url_for('static', filename='js/client-map.js') }}"></script>
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1">Nuevo Cliente</h4>
+    <p class="text-muted small mb-0">Completa la ficha para habilitar los módulos e iniciar la gestión de proyectos.</p>
+  </div>
+  <a href="{{ url_for('clientes.list_clientes') }}" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Datos Generales</h6>
+
+          <div class="mb-3">
+            <label class="form-label">Nombre / Razón social *</label>
+            <input class="form-control" name="nombre" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Cédula de identidad / RUC</label>
+            <input class="form-control" name="cedula" placeholder="Ej.: 1234567-8 o 80012345-6">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Correo electrónico</label>
+            <input type="email" class="form-control" name="correo" placeholder="contacto@empresa.com">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Teléfono</label>
+            <input class="form-control" name="telefono" placeholder="+595...">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Ubicación</h6>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Departamento</label>
+              <input class="form-control" name="departamento">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Distrito</label>
+              <input class="form-control" name="distrito">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Lugar / Barrio</label>
+              <input class="form-control" name="lugar">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Ubicación general</label>
+              <input class="form-control" name="ubicacion" placeholder="Dirección descriptiva, referencia o coordenadas">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Ubicación GPS / Google Maps</label>
+              <input class="form-control" name="ubicacion_gps" placeholder="https://maps.google.com/...">
+              <div class="form-text">Pegá un enlace directo o coordenadas para localizar rápidamente el sitio.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label d-flex justify-content-between align-items-center">
+                Selecciona la ubicación en el mapa
+                <span class="text-muted small" id="cliente-map-coords">—</span>
+              </label>
+              <div class="client-map-wrapper">
+                <div class="client-map-overlay">
+                  <div class="client-map-search-card">
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text bg-transparent border-end-0">
+                        <i class="bi bi-search text-secondary"></i>
+                      </span>
+                      <input
+                        type="text"
+                        class="form-control border-start-0"
+                        id="cliente-map-search"
+                        placeholder="Buscar dirección, ciudad o referencia"
+                        autocomplete="off"
+                      >
+                      <button type="button" class="btn btn-outline-primary" id="cliente-map-search-btn">
+                        Buscar
+                      </button>
+                    </div>
+                    <div class="client-map-search-results list-group mt-2" id="cliente-map-search-results" hidden></div>
+                  </div>
+                </div>
+                <div
+                  id="cliente-map"
+                  class="client-map-container"
+                  data-client-map="true"
+                  data-editable="true"
+                  data-link-target="[name='ubicacion_gps']"
+                  data-coord-target="#cliente-map-coords"
+                  data-default-lat="-25.2867"
+                  data-default-lng="-57.6459"
+                  data-search-input="#cliente-map-search"
+                  data-search-button="#cliente-map-search-btn"
+                  data-search-results="#cliente-map-search-results"
+                ></div>
+              </div>
+              <div class="form-text mt-2">Haz clic en cualquier punto para fijar la ubicación. Generaremos el enlace de Google Maps automáticamente.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Documentación</h6>
+          <label class="form-label">Carga de archivos (PDF, JPG, PNG, GIF, WEBP)</label>
+          <input type="file" class="form-control" name="documentos" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp">
+          <div class="form-text">Se guardarán junto a la ficha del cliente. Podés adjuntar cédula, RUC, contratos u otros documentos relevantes.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end gap-2 mt-4">
+    <a href="{{ url_for('clientes.list_clientes') }}" class="btn btn-outline-secondary">Cancelar</a>
+    <button class="btn btn-primary">Guardar Cliente</button>
+  </div>
+</form>
+{% endblock %}

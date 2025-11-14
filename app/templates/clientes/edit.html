@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+  {{ super() }}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+{% endblock %}
+{% block extra_scripts %}
+  {{ super() }}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="{{ url_for('static', filename='js/client-map.js') }}"></script>
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1">Editar Cliente</h4>
+    <p class="text-muted small mb-0">Actualizá los datos del cliente para mantener la información consistente en todos los módulos.</p>
+  </div>
+  <a href="{{ url_for('clientes.modulos', id_cliente=cliente.id_cliente) }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Volver
+  </a>
+</div>
+
+<form method="post" class="needs-validation" novalidate>
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Datos Generales</h6>
+
+          <div class="mb-3">
+            <label class="form-label">Nombre / Razón social *</label>
+            <input class="form-control" name="nombre" value="{{ cliente.nombre_razon_social }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Cédula de identidad / RUC</label>
+            <input class="form-control" name="cedula" value="{{ cliente.cedula_identidad or '' }}">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Correo electrónico</label>
+            <input type="email" class="form-control" name="correo" value="{{ cliente.correo_electronico or '' }}">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Teléfono</label>
+            <input class="form-control" name="telefono" value="{{ cliente.telefono or '' }}">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Ubicación</h6>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Departamento</label>
+              <input class="form-control" name="departamento" value="{{ cliente.departamento or '' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Distrito</label>
+              <input class="form-control" name="distrito" value="{{ cliente.distrito or '' }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Lugar / Barrio</label>
+              <input class="form-control" name="lugar" value="{{ cliente.lugar or '' }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Ubicación general</label>
+              <input class="form-control" name="ubicacion" value="{{ cliente.ubicacion_general or '' }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Ubicación GPS / Google Maps</label>
+              <input class="form-control" name="ubicacion_gps" value="{{ cliente.ubicacion_gps or '' }}">
+              <div class="form-text">Pegá un enlace directo o coordenadas para localizar rápidamente el sitio.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label d-flex justify-content-between align-items-center">
+                Ajusta la ubicación en el mapa
+                <span class="text-muted small" id="cliente-map-coords">—</span>
+              </label>
+              <div class="client-map-wrapper">
+                <div class="client-map-overlay">
+                  <div class="client-map-search-card">
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text bg-transparent border-end-0">
+                        <i class="bi bi-search text-secondary"></i>
+                      </span>
+                      <input
+                        type="text"
+                        class="form-control border-start-0"
+                        id="cliente-map-search"
+                        placeholder="Buscar dirección, ciudad o referencia"
+                        autocomplete="off"
+                        value=""
+                      >
+                      <button type="button" class="btn btn-outline-primary" id="cliente-map-search-btn">
+                        Buscar
+                      </button>
+                    </div>
+                    <div class="client-map-search-results list-group mt-2" id="cliente-map-search-results" hidden></div>
+                  </div>
+                </div>
+                <div
+                  id="cliente-map"
+                  class="client-map-container"
+                  data-client-map="true"
+                  data-editable="true"
+                  data-link-target="[name='ubicacion_gps']"
+                  data-coord-target="#cliente-map-coords"
+                  data-default-lat="-25.2867"
+                  data-default-lng="-57.6459"
+                  data-initial-link="{{ (cliente.ubicacion_gps or '')|e }}"
+                  data-search-input="#cliente-map-search"
+                  data-search-button="#cliente-map-search-btn"
+                  data-search-results="#cliente-map-search-results"
+                ></div>
+              </div>
+              <div class="form-text mt-2">Puedes mover el marcador o pegar nuevas coordenadas y haremos el resto.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end gap-2 mt-4">
+    <a href="{{ url_for('clientes.modulos', id_cliente=cliente.id_cliente) }}" class="btn btn-outline-secondary">Cancelar</a>
+    <button class="btn btn-primary">Guardar cambios</button>
+  </div>
+</form>
+{% endblock %}

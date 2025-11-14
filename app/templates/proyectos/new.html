@@ -1,0 +1,492 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1">Nuevo Proyecto</h4>
+    <p class="text-muted small mb-0">Registra el proyecto completo para habilitar seguimiento financiero, documental y por módulos.</p>
+  </div>
+  <a href="{{ back_instituciones_url or url_for('proyectos.index') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Volver
+  </a>
+</div>
+
+<form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Datos generales</h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Cliente *</label>
+              <select name="id_cliente" id="id_cliente" class="form-select" required>
+                <option value="">Seleccionar cliente…</option>
+                {% for cliente in clientes %}
+                <option value="{{ cliente.id_cliente }}">{{ cliente.nombre_razon_social }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Institución *</label>
+              <select name="institucion" id="institucion" class="form-select" required>
+                <option value="">Seleccionar institución…</option>
+                {% for modulo, opciones in module_subtipos|dictsort %}
+                <option value="{{ modulo }}">{{ modulo }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Subtipo *</label>
+              <select name="subtipo" id="subtipo" class="form-select" required>
+                <option value="">Seleccionar subtipo…</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nombre del proyecto *</label>
+              <input type="text" class="form-control" name="nombre_proyecto" placeholder="Descripción o referencia del proyecto" required>
+              <div class="form-text">Ej.: EIA Planta Agroindustrial Curuguaty.</div>
+            </div>
+            <div class="col-md-3" data-mode-hide="mades-otros,asesoria-juridica">
+              <label class="form-label">Estado</label>
+              <select name="estado" class="form-select">
+                {% for estado in estados %}
+                  <option value="{{ estado.value }}" {% if loop.first %}selected{% endif %}>{{ estado.value.replace('_',' ')|title }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Año</label>
+              <input type="number" class="form-control" name="anho" value="{{ anho_actual }}" min="2000" max="2100">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6" data-mode-hide="mades-otros,asesoria-juridica">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Cronograma y licencias</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">EXP SIAM</label>
+              <input type="text" class="form-control" name="exp_siam" placeholder="Código en SIAM">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha de emisión de licencia <span class="text-muted">(opcional)</span></label>
+              <input type="date" class="form-control" name="fecha_emision_licencia" value="{{ request.form.get('fecha_emision_licencia', '') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha de vencimiento de licencia <span class="text-muted">(opcional)</span></label>
+              <input type="date" class="form-control" name="fecha_vencimiento_licencia">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6" data-mode-hide="mades-otros,asesoria-juridica">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Finanzas</h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Costo total</label>
+              <div class="input-group">
+                <span class="input-group-text">Gs.</span>
+                <input type="number" step="0.01" min="0" class="form-control" name="costo_total" id="costo_total">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">% entregado</label>
+              <div class="input-group">
+                <input type="number" step="0.01" min="0" max="100" class="form-control" name="porcentaje_entrega" id="porcentaje_entrega">
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-muted small">Monto entregado (auto)</label>
+              <div class="form-control-plaintext fw-semibold" id="monto_entregado_preview">Gs. 0</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small">Saldo restante (auto)</label>
+              <div class="form-control-plaintext fw-semibold" id="saldo_restante_preview">Gs. 0</div>
+            </div>
+          </div>
+          <div class="alert alert-light border mt-3 mb-0">
+            Los valores se recalculan automáticamente en el guardado según costo total y porcentaje entregado.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12" data-mode-hide="mades-otros">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Ubicación y predio</h6>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label">Departamento</label>
+              <input type="text" class="form-control" name="departamento">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Distrito</label>
+              <input type="text" class="form-control" name="distrito">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Lugar / Barrio</label>
+              <input type="text" class="form-control" name="lugar">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Finca</label>
+              <input type="text" class="form-control" name="finca">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Matrícula</label>
+              <input type="text" class="form-control" name="matricula">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Padrón</label>
+              <input type="text" class="form-control" name="padron">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Lote</label>
+              <input type="text" class="form-control" name="lote">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Manzana</label>
+              <input type="text" class="form-control" name="manzana">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Fracción</label>
+              <input type="text" class="form-control" name="fraccion">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Superficie (ha)</label>
+              <input type="number" step="0.01" min="0" class="form-control" name="superficie">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Documentación</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Mapa de ubicación de referencia</label>
+              <input type="file" class="form-control" name="mapa" accept=".pdf,.jpg,.jpeg,.png,.webp">
+              <div class="form-text">Adjunta un mapa, croquis o plano del proyecto.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Facturas o comprobantes</label>
+              <input type="file" class="form-control" name="facturas" multiple accept=".pdf,.jpg,.jpeg,.png,.webp">
+              <div class="form-text">Podés cargar una o varias facturas al crear el proyecto.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Agregar notas y shapefile/mapas</label>
+              <input type="file" class="form-control" name="documentos" multiple
+                     accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xlsx,.zip,.rar,.shp">
+                <div class="form-text">Podés cargar notas, shapefiles, imágenes u otros anexos relevantes.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección específica SENAVE -->
+    <div class="col-12 d-none" id="senave-section">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">SENAVE · Datos específicos</h6>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Desglose de subactividades</label>
+              <textarea class="form-control" name="senave_desglose" rows="3" placeholder="Detalle de la subactividad, requisitos, observaciones..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tipo o concepto</label>
+              <input type="text" class="form-control" name="senave_tipo_concepto" placeholder="Ej.: Registro inicial, Renovación, Cambio de titular, etc.">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Anexos de la subactividad (PDF/otros)</label>
+              <input type="file" class="form-control" name="senave_anexos" multiple
+                     accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xlsx,.zip,.rar">
+              <div class="form-text">Podés adjuntar uno o varios archivos relacionados específicamente a SENAVE.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección específica BONO DE SERVICIOS AMBIENTALES -->
+    <div class="col-12 d-none" id="bono-section">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted fw-semibold mb-3">Bono de Servicios Ambientales · Datos específicos</h6>
+          
+          <!-- Datos generales del bono -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">De quién compró</label>
+              <input type="text" class="form-control" name="de_quien_compro" placeholder="Nombre del vendedor o entidad">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Hectáreas</label>
+              <input type="number" step="0.01" min="0" class="form-control" name="hectareas_bono" placeholder="0.00">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Año</label>
+              <input type="number" class="form-control" name="anio_bono" min="2000" max="2100" placeholder="2024">
+            </div>
+          </div>
+
+          <!-- Sistema toggle de asociaciones -->
+          <div class="row g-3 mb-4">
+            <div class="col-12">
+              <label class="form-label">Tipo de Asociación</label>
+              <div class="btn-group w-100" role="group" aria-label="Tipo de asociación">
+                <input type="radio" class="btn-check" name="tipo_asociacion" id="alproea" value="ALPROEA E.A.S">
+                <label class="btn btn-outline-success" for="alproea">
+                  <i class="bi bi-tree"></i> ALPROEA E.A.S
+                  <small class="d-block text-muted">Alianza de Productores para el Equilibrio Ambiental</small>
+                </label>
+                
+                <input type="radio" class="btn-check" name="tipo_asociacion" id="aprosec" value="APROSEC">
+                <label class="btn btn-outline-success" for="aprosec">
+                  <i class="bi bi-leaf"></i> APROSEC
+                  <small class="d-block text-muted">Asociación de Propietarios de Servicios Ecosistémicos</small>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cronograma y licencias específicas -->
+          <h6 class="text-uppercase text-muted fw-semibold mb-3 border-top pt-3">Cronograma y licencias</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label class="form-label">EXP SIAM</label>
+              <input type="text" class="form-control" name="exp_siam_bono" placeholder="Código SIAM específico">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Fecha de emisión del bono <span class="text-muted">(opcional)</span></label>
+              <input type="date" class="form-control" name="fecha_emision_bono">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Fecha de vencimiento del bono <span class="text-muted">(opcional)</span></label>
+              <input type="date" class="form-control" name="fecha_vencimiento_bono">
+            </div>
+          </div>
+
+          <!-- Finanzas específicas -->
+          <h6 class="text-uppercase text-muted fw-semibold mb-3 border-top pt-3">Finanzas</h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Pago total</label>
+              <div class="input-group">
+                <span class="input-group-text">Gs.</span>
+                <input type="number" step="0.01" min="0" class="form-control" name="pago_total_bono" id="pago_total_bono">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Hectáreas (para cálculo)</label>
+              <input type="number" step="0.01" min="0" class="form-control" name="hectareas_finanzas" id="hectareas_finanzas">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-muted small">Precio por hectárea (auto)</label>
+              <div class="form-control-plaintext fw-semibold" id="precio_hectarea_preview">Gs. 0</div>
+            </div>
+          </div>
+          
+          <div class="alert alert-info border mt-3 mb-0">
+            <i class="bi bi-calculator"></i> El precio por hectárea se calcula automáticamente: Pago total ÷ Hectáreas
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end gap-2 mt-4">
+    <a href="{{ back_instituciones_url or url_for('proyectos.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+    <button type="submit" class="btn btn-primary">Guardar proyecto</button>
+  </div>
+</form>
+
+<script id="module-subtipos" type="application/json">{{ module_subtipos|tojson }}</script>
+<script>
+  const moduleSubtipos = JSON.parse(document.getElementById('module-subtipos').textContent);
+
+  function actualizarSubtipos(moduloSeleccionado, valorActual) {
+    const subtipoSelect = document.getElementById('subtipo');
+    subtipoSelect.innerHTML = '<option value="">Seleccionar subtipo…</option>';
+    const opciones = moduleSubtipos[moduloSeleccionado] || [];
+    let selectedFound = false;
+    opciones.forEach(([valor, titulo]) => {
+      const opt = document.createElement('option');
+      opt.value = valor;
+      opt.textContent = titulo;
+      if (valorActual && valor === valorActual) {
+        opt.selected = true;
+        selectedFound = true;
+      }
+      subtipoSelect.appendChild(opt);
+    });
+    if (valorActual && !selectedFound) {
+      const opt = document.createElement('option');
+      opt.value = valorActual;
+      opt.textContent = valorActual;
+      opt.selected = true;
+      subtipoSelect.appendChild(opt);
+    }
+    aplicarModoFormulario();
+  }
+
+  function formatoMoneda(valor) {
+    if (!valor || isNaN(valor)) return 'Gs. 0';
+    const number = Number(valor);
+    return 'Gs. ' + number.toLocaleString('es-PY', { minimumFractionDigits: 0 });
+  }
+
+  function recalcularFinanzas() {
+    const costo = parseFloat(document.getElementById('costo_total').value) || 0;
+    const porcentaje = parseFloat(document.getElementById('porcentaje_entrega').value) || 0;
+    const montoEntregado = (costo * porcentaje) / 100;
+    const saldoRestante = costo - montoEntregado;
+    document.getElementById('monto_entregado_preview').textContent = formatoMoneda(montoEntregado);
+    document.getElementById('saldo_restante_preview').textContent = formatoMoneda(saldoRestante);
+  }
+
+  function toggleElementForMode(element, hidden) {
+    if (!element) return;
+    element.classList.toggle('d-none', hidden);
+    const controls = element.querySelectorAll('input, select, textarea');
+    controls.forEach((control) => {
+      if (control.dataset.modeOriginalDisabled === undefined) {
+        control.dataset.modeOriginalDisabled = control.disabled ? '1' : '0';
+      }
+      if (control.dataset.modeOriginalRequired === undefined) {
+        control.dataset.modeOriginalRequired = control.required ? '1' : '0';
+      }
+      if (hidden) {
+        control.disabled = true;
+        control.removeAttribute('required');
+      } else {
+        control.disabled = control.dataset.modeOriginalDisabled === '1';
+        if (control.dataset.modeOriginalRequired === '1') {
+          control.setAttribute('required', 'required');
+        } else {
+          control.removeAttribute('required');
+        }
+      }
+    });
+  }
+
+  function normalizeText(value) {
+    return (value || '')
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  function obtenerModoActual() {
+    const institucionSelect = document.getElementById('institucion');
+    const subtipoSelect = document.getElementById('subtipo');
+    if (!institucionSelect || !subtipoSelect) {
+      return null;
+    }
+    const institucionValue = normalizeText(institucionSelect.value);
+    const subtipoValue = normalizeText(subtipoSelect.value);
+    if (institucionValue === 'mades' && subtipoValue === 'otros') {
+      return 'mades-otros';
+    }
+    if (institucionValue === 'asesoria juridica') {
+      return 'asesoria-juridica';
+    }
+    return null;
+  }
+
+  function aplicarModoFormulario() {
+    const modo = obtenerModoActual();
+    document.querySelectorAll('[data-mode-hide]').forEach((element) => {
+      const modes = element.dataset.modeHide
+        .split(',')
+        .map((item) => normalizeText(item))
+        .filter(Boolean);
+      const shouldHide = !!modo && modes.includes(modo);
+      toggleElementForMode(element, shouldHide);
+    });
+  }
+
+  // Función para calcular precio por hectárea del bono
+  function recalcularPrecioBono() {
+    const pagoTotal = parseFloat(document.getElementById('pago_total_bono').value) || 0;
+    const hectareas = parseFloat(document.getElementById('hectareas_finanzas').value) || 0;
+    const preview = document.getElementById('precio_hectarea_preview');
+    
+    if (pagoTotal > 0 && hectareas > 0) {
+      const precio = pagoTotal / hectareas;
+      preview.textContent = `Gs. ${precio.toLocaleString('es-PY', { maximumFractionDigits: 0 })}`;
+    } else {
+      preview.textContent = 'Gs. 0';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const institucionSelect = document.getElementById('institucion');
+    const clienteSelect = document.getElementById('id_cliente');
+    const subtipoSelect = document.getElementById('subtipo');
+    const senaveSection = document.getElementById('senave-section');
+    const bonoSection = document.getElementById('bono-section');
+
+    institucionSelect.addEventListener('change', (event) => {
+      actualizarSubtipos(event.target.value);
+      // Mostrar/ocultar sección SENAVE
+      const inst = normalizeText(event.target.value);
+      senaveSection.classList.toggle('d-none', inst !== 'senave');
+      // Mostrar/ocultar sección BONO DE SERVICIOS AMBIENTALES
+      bonoSection.classList.toggle('d-none', inst !== 'bono de servicios ambientales');
+    });
+
+    subtipoSelect.addEventListener('change', aplicarModoFormulario);
+
+    document.getElementById('costo_total').addEventListener('input', recalcularFinanzas);
+    document.getElementById('porcentaje_entrega').addEventListener('input', recalcularFinanzas);
+    
+    // Event listeners para cálculo del bono
+    document.getElementById('pago_total_bono').addEventListener('input', recalcularPrecioBono);
+    document.getElementById('hectareas_finanzas').addEventListener('input', recalcularPrecioBono);
+
+    const params = new URLSearchParams(window.location.search);
+    const preCliente = params.get('id_cliente');
+    const preInstitucion = params.get('institucion');
+    const preSubtipo = params.get('subtipo');
+    const preAnho = params.get('ano');
+
+    if (preCliente) {
+      clienteSelect.value = preCliente;
+    }
+    if (preInstitucion) {
+      institucionSelect.value = preInstitucion;
+      actualizarSubtipos(preInstitucion, preSubtipo);
+    } else {
+      actualizarSubtipos(institucionSelect.value, preSubtipo);
+    }
+    // Activar visibilidad inicial SENAVE
+    senaveSection.classList.toggle('d-none', normalizeText(institucionSelect.value) !== 'senave');
+    // Activar visibilidad inicial BONO
+    bonoSection.classList.toggle('d-none', normalizeText(institucionSelect.value) !== 'bono de servicios ambientales');
+    if (preAnho) {
+      const anhoInput = document.querySelector('input[name="anho"]');
+      if (anhoInput) anhoInput.value = preAnho;
+    }
+
+    recalcularFinanzas();
+    recalcularPrecioBono();
+    aplicarModoFormulario();
+  });
+</script>
+{% endblock %}

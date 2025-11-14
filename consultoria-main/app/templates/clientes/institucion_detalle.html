@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <img src="{{ modulo.logo_url }}" alt="{{ modulo.label }}" class="rounded shadow-sm" style="height:64px;">
+    <div>
+      <h4 class="mb-1">{{ cliente.nombre_razon_social }}</h4>
+      <div class="text-muted small">{{ modulo.full_name }} · {{ modulo.label }}</div>
+      <div class="text-muted small">
+        {{ cliente.cedula_identidad or 'Sin cédula' }} · {{ cliente.telefono or 'Sin teléfono' }} · {{ cliente.correo_electronico or 'Sin correo' }}
+      </div>
+    </div>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{{ url_for('clientes.modulos', id_cliente=cliente.id_cliente) }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Volver a módulos
+    </a>
+    <a href="{{ create_project_url }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-circle"></i> Crear proyecto en {{ modulo.label }}
+    </a>
+  </div>
+</div>
+
+{% if no_subtipos %}
+  <div class="alert alert-light border text-muted">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-info-circle fs-4"></i>
+      <div>
+        <strong>Aún no hay subtipos registrados en {{ modulo.label }} para este cliente.</strong>
+        <div>Creá un proyecto para habilitar los submódulos.</div>
+      </div>
+    </div>
+    <div class="mt-3">
+      <a href="{{ create_project_url }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Crear proyecto
+      </a>
+    </div>
+  </div>
+{% else %}
+  <div class="row g-3">
+    {% for subtipo in subtipos %}
+    <div class="col-md-4 col-lg-3">
+      <a href="{{ subtipo.url }}" class="text-decoration-none">
+        <div class="card h-100 shadow-sm border-0 subtipo-card">
+          <div class="card-body text-center py-4">
+            <div class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width:64px;height:64px;">
+              <i class="bi bi-folder-fill fs-3"></i>
+            </div>
+            <h6 class="fw-semibold text-uppercase mb-1">{{ subtipo.name }}</h6>
+            <p class="text-muted small mb-2">Proyectos en este submódulo</p>
+            <span class="badge bg-primary">{{ subtipo.count }} proyecto{{ 's' if subtipo.count != 1 else '' }}</span>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<style>
+.subtipo-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.subtipo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+}
+</style>
+{% endblock %}
