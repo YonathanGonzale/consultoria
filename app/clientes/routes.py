@@ -336,7 +336,10 @@ def modulos(id_cliente):
     seen = set()
     modules = []
 
-    def _append_module(key):
+    def _append_module(raw_key):
+        key = raw_key or 'Otros'
+        if key in seen or key not in project_counts:
+            return
         meta = _module_meta(key)
         modules.append({
             'key': meta['key'],
@@ -345,18 +348,20 @@ def modulos(id_cliente):
             'logo': meta['logo_url'],
             'color': meta['color'],
             'icon': meta['icon'],
-            'count': project_counts.get(meta['key'], 0),
+            'count': project_counts[key],
             'url': url_for('clientes.modulo_subtipos', id_cliente=id_cliente, inst=meta['key']),
         })
-        seen.add(meta['key'])
+        seen.add(key)
 
     for preferred in preferred_order:
-        if preferred in MODULE_DEFINITIONS:
-            _append_module(preferred)
+        _append_module(preferred)
 
-    for key in MODULE_DEFINITIONS.keys():
-        if key not in seen:
-            _append_module(key)
+    remaining_keys = sorted(
+        (key for key in project_counts.keys() if key not in seen),
+        key=lambda value: value.lower(),
+    )
+    for key in remaining_keys:
+        _append_module(key)
 
     total_proyectos = sum(project_counts.values())
     create_project_url = url_for('proyectos.nuevo') + f'?id_cliente={id_cliente}'
